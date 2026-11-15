@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:appli_muscu/echauffement_page.dart';
+import 'package:appli_muscu/salle_page.dart';
 
 void main() => runApp(const AppliMuscu());
 
@@ -43,7 +45,13 @@ class HomePage extends StatelessWidget {
                 ),
                 onPressed: () => Navigator.push(
                   context,
-                  MaterialPageRoute(builder: (_) => SectionPage(title: s)),
+                  MaterialPageRoute(
+                builder: (_) => switch (s) {
+                      'Échauffement' => const EchauffementPage(),
+                      'Salle de sport' => const SallePage(),
+                      _ => SectionPage(title: s),
+                    },
+                  ),
                 ),
                 child: Text(s, style: const TextStyle(fontSize: 18)),
               ),
