@@ -79,4 +79,12 @@ const List<Exercice> echauffement = [
         "Saute en écartant les jambes et en levant les bras au-dessus de la tête, puis reviens pieds joints, bras le long du corps.",
     conseil: "Si les sauts te gênent, fais la version sans saut : un pied à la fois.",
   ),
+  Exercice(
+    nom: "Cercles de poignets",
+    duree: "20 secondes",
+    zone: "Poignets",
+    consigne:
+        "Levez les bras devant vous, mains en avant. Faites des cercles avec les poignets dans un sens puis dans l'autre.",
+    conseil: "Faites des mouvements lents et contrôlés pour éviter les tensions.",
+  ),
 ];

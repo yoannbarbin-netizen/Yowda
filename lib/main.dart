@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:appli_muscu/echauffement_page.dart';
-import 'package:appli_muscu/salle_page.dart';
+import 'pages/echauffement_page.dart';
+import 'pages/etirements_page.dart';
 
 void main() => runApp(const AppliMuscu());
 
@@ -29,6 +29,17 @@ class HomePage extends StatelessWidget {
     'Étirements',
   ];
 
+  Widget _pageFor(String section) {
+    switch (section) {
+      case 'Échauffement':
+        return const EchauffementPage();
+      case 'Étirements':
+        return const EtirementsPage();
+      default:
+        return SectionPage(title: section);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -45,13 +56,7 @@ class HomePage extends StatelessWidget {
                 ),
                 onPressed: () => Navigator.push(
                   context,
-                  MaterialPageRoute(
-                builder: (_) => switch (s) {
-                      'Échauffement' => const EchauffementPage(),
-                      'Salle de sport' => const SallePage(),
-                      _ => SectionPage(title: s),
-                    },
-                  ),
+                  MaterialPageRoute(builder: (_) => _pageFor(s)),
                 ),
                 child: Text(s, style: const TextStyle(fontSize: 18)),
               ),
