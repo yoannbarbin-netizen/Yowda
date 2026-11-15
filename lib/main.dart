@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'pages/echauffement_page.dart';
 import 'pages/etirements_page.dart';
+import 'pages/materiel_maison_page.dart';
 
 void main() => runApp(const AppliMuscu());
 
@@ -33,6 +34,8 @@ class HomePage extends StatelessWidget {
     switch (section) {
       case 'Échauffement':
         return const EchauffementPage();
+      case 'Matériel maison':
+        return const MaterielMaisonPage();
       case 'Étirements':
         return const EtirementsPage();
       default:
