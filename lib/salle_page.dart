@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:model_viewer_plus/model_viewer_plus.dart';
 
 class Equipement {
   final String nom;
@@ -243,7 +244,19 @@ class EquipementPage extends StatelessWidget {
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
-          Container(
+         if (equipement.nom == 'Tirage vertical')
+            SizedBox(
+              height: 300,
+              child: ModelViewer(
+                src: 'assets/models/lat_pulldown.glb',
+                alt: 'Modèle 3D de la machine de tirage vertical',
+                autoRotate: true,
+                cameraControls: true,
+                backgroundColor: const Color(0xFFEEEEEE),
+              ),
+            )
+          else
+            Container(
             height: 200,
             decoration: BoxDecoration(
               color: couleurs.surfaceContainerHighest,

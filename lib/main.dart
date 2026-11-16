@@ -3,6 +3,7 @@ import 'pages/echauffement_page.dart';
 import 'pages/etirements_page.dart';
 import 'pages/materiel_maison_page.dart';
 import 'pages/sans_materiel_page.dart';
+import 'salle_page.dart';
 
 void main() => runApp(const AppliMuscu());
 
@@ -35,6 +36,8 @@ class HomePage extends StatelessWidget {
     switch (section) {
       case 'Échauffement':
         return const EchauffementPage();
+      case 'Salle de sport':
+        return const SallePage();
       case 'Matériel maison':
         return const MaterielMaisonPage();
       case 'Sans matériel':
