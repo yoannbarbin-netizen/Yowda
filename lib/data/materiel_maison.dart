@@ -82,7 +82,7 @@ const List<Materiel> materiels = [
     id: 'serviette',
     nom: "Grande serviette",
     categorie: "Accessoires",
-    charge: "Sert de poignée ou de tirage, sans charge propre.",
+    charge: "Sert de glisseur sur sol lisse, sans charge propre.",
     securite: "Choisis une serviette solide, sans trou ni déchirure.",
   ),
   Materiel(
@@ -112,30 +112,7 @@ const List<Materiel> materiels = [
 ];
 
 const List<ExerciceMaison> exercicesMaison = [
-  ExerciceMaison(
-    nom: "Curl biceps",
-    muscles: "Biceps",
-    auChoix: ['bidon5l', 'packEau', 'bouteilles', 'sacLeste'],
-    consigne:
-        "Debout, tiens ta charge le long du corps, coudes collés aux côtés. Plie les coudes pour monter la charge vers les épaules, puis redescends lentement.",
-    securite: "Dos droit, sans balancer le corps pour aider le mouvement.",
-  ),
-  ExerciceMaison(
-    nom: "Développé épaules",
-    muscles: "Épaules, triceps",
-    auChoix: ['bidon5l', 'bouteilles', 'packEau'],
-    consigne:
-        "Debout ou assis, charge à hauteur d'épaules. Pousse vers le haut jusqu'à bras tendus, puis redescends en contrôlant.",
-    securite: "Ne cambre pas le dos. Si ça tire dans le bas du dos, allège.",
-  ),
-  ExerciceMaison(
-    nom: "Élévations latérales",
-    muscles: "Épaules",
-    requis: ['bouteilles'],
-    consigne:
-        "Une bouteille par main, bras le long du corps. Monte les bras sur les côtés jusqu'à hauteur d'épaules, puis redescends doucement.",
-    securite: "Garde les coudes légèrement fléchis et évite de hausser les épaules.",
-  ),
+  // ---------- Jambes ----------
   ExerciceMaison(
     nom: "Squat goblet",
     muscles: "Cuisses, fessiers",
@@ -145,63 +122,87 @@ const List<ExerciceMaison> exercicesMaison = [
     securite: "Dos droit et genoux dans l'axe des pieds.",
   ),
   ExerciceMaison(
+    nom: "Squat bulgare",
+    muscles: "Cuisses, fessiers",
+    requis: ['chaise'],
+    consigne:
+        "Debout, dos à la chaise, pose le dessus d'un pied sur l'assise derrière toi. Descends en pliant la jambe avant, buste droit, puis remonte. Tu peux tenir un bidon ou une bouteille contre la poitrine pour augmenter la difficulté.",
+    securite:
+        "Chaise calée contre un mur. Garde le genou avant au-dessus du pied et commence sans charge.",
+  ),
+  ExerciceMaison(
+    nom: "Fentes avec charge",
+    muscles: "Cuisses, fessiers",
+    auChoix: ['bouteilles', 'bidon5l', 'sacLeste'],
+    consigne:
+        "Tiens une charge dans chaque main (ou le bidon contre la poitrine, ou le sac sur le dos). Fais un grand pas en avant, descends le genou arrière vers le sol, puis reviens et change de jambe.",
+    securite: "Buste droit, genou avant au-dessus du pied. Commence léger.",
+  ),
+  ExerciceMaison(
+    nom: "Montées sur chaise",
+    muscles: "Cuisses, fessiers",
+    requis: ['chaise'],
+    consigne:
+        "Face à la chaise, pose un pied dessus et monte en poussant dans ce pied. Redescends doucement, puis change de jambe.",
+    securite:
+        "Chaise stable et calée contre un mur. Pose le pied entier sur l'assise.",
+  ),
+  ExerciceMaison(
     nom: "Soulevé de terre roumain",
     muscles: "Ischio-jambiers, fessiers, bas du dos",
     auChoix: ['packEau', 'bidon5l', 'sacLeste'],
     consigne:
         "Debout, charge devant les cuisses. Pousse les fesses vers l'arrière en gardant le dos plat, descends jusqu'aux genoux, puis remonte.",
-    securite: "Ne ronde jamais le dos. Allège si tu ne sens pas les cuisses arrière.",
-  ),
-  ExerciceMaison(
-    nom: "Tractions",
-    muscles: "Dos, biceps",
-    requis: ['barreTraction'],
-    consigne:
-        "Suspendu à la barre, mains un peu plus larges que les épaules. Tire jusqu'à passer le menton au-dessus de la barre, puis redescends lentement.",
-    securite: "Descends toujours en contrôle et vérifie la barre avant de commencer.",
-  ),
-  ExerciceMaison(
-    nom: "Tractions lestées",
-    muscles: "Dos, biceps",
-    requis: ['barreTraction'],
-    auChoix: ['sacLeste'],
-    consigne:
-        "Mets le sac lesté sur le dos, bien serré, puis fais des tractions comme d'habitude, en commençant avec une charge légère.",
     securite:
-        "Le sac ne doit pas bouger pendant le mouvement. Augmente la charge très progressivement.",
+        "Ne ronde jamais le dos. Allège si tu ne sens pas les cuisses arrière.",
   ),
   ExerciceMaison(
-    nom: "Rowing avec élastique",
-    muscles: "Dos, biceps",
-    requis: ['elastique'],
+    nom: "Hip thrust sur chaise",
+    muscles: "Fessiers, ischio-jambiers",
+    requis: ['chaise'],
+    auChoix: ['sacLeste', 'bidon5l', 'packEau'],
     consigne:
-        "Fixe l'élastique devant toi à hauteur de poitrine. Tire les coudes vers l'arrière en serrant les omoplates, puis reviens lentement.",
-    securite: "Vérifie que l'attache de l'élastique est solide.",
+        "Assis au sol, haut du dos appuyé contre le bord de l'assise, charge posée sur le bassin. Pousse dans les talons pour lever le bassin jusqu'à aligner épaules, hanches et genoux, puis redescends doucement.",
+    securite:
+        "Chaise calée contre un mur. Garde le menton rentré et ne cambre pas le bas du dos en haut du mouvement.",
   ),
+  ExerciceMaison(
+    nom: "Curl ischio-jambiers glissé",
+    muscles: "Ischio-jambiers, fessiers",
+    requis: ['serviette'],
+    consigne:
+        "Allongé sur le dos, talons posés sur la serviette, sur un sol lisse. Lève le bassin, puis glisse les pieds vers l'avant en gardant le bassin haut, et ramène-les vers les fesses.",
+    securite:
+        "Sol lisse et sec, sans tapis. Si les cuisses arrière crampent, arrête et recommence plus doucement.",
+  ),
+  ExerciceMaison(
+    nom: "Montées sur pointes lestées",
+    muscles: "Mollets",
+    auChoix: ['bidon5l', 'sacLeste', 'bouteilles'],
+    consigne:
+        "Debout, charge tenue le long du corps ou sac sur le dos. Monte sur la pointe des pieds le plus haut possible, marque une pause, puis redescends lentement.",
+    securite:
+        "Appuie-toi à un mur pour l'équilibre et garde les chevilles bien droites.",
+  ),
+
+  // ---------- Pousser ----------
   ExerciceMaison(
     nom: "Développé pectoraux avec élastique",
     muscles: "Pectoraux, triceps",
     requis: ['elastique'],
     consigne:
         "Passe l'élastique dans ton dos, une extrémité dans chaque main. Pousse les mains vers l'avant jusqu'à bras tendus, puis reviens doucement.",
-    securite: "Garde l'élastique bien à plat dans le dos, sans qu'il remonte au cou.",
+    securite:
+        "Garde l'élastique bien à plat dans le dos, sans qu'il remonte au cou.",
   ),
   ExerciceMaison(
-    nom: "Dips sur chaise",
-    muscles: "Triceps, épaules",
+    nom: "Pompes pieds surélevés",
+    muscles: "Haut des pectoraux, épaules, triceps",
     requis: ['chaise'],
     consigne:
-        "Assis au bord d'une chaise, mains de chaque côté des hanches. Glisse le bassin devant la chaise, plie les coudes pour descendre, puis repousse.",
-    securite: "Chaise calée contre un mur. Ne descends pas trop bas si ça tire dans l'épaule.",
-  ),
-  ExerciceMaison(
-    nom: "Rowing inversé sous la table",
-    muscles: "Dos, biceps",
-    requis: ['table'],
-    consigne:
-        "Allonge-toi sous la table, saisis le bord et tire la poitrine vers le plateau, corps gainé, puis redescends doucement.",
+        "Mains au sol sous les épaules, pieds posés sur l'assise de la chaise. Corps gainé de la tête aux talons, descends la poitrine vers le sol puis repousse.",
     securite:
-        "Table très stable et lourde, sinon renonce. Garde la tête sous contrôle pour ne pas cogner le plateau.",
+        "Chaise calée contre un mur. Si le dos se creuse, remets les pieds au sol.",
   ),
   ExerciceMaison(
     nom: "Pompes lestées",
@@ -213,11 +214,161 @@ const List<ExerciceMaison> exercicesMaison = [
         "Commence avec peu de poids. Si le dos se creuse, enlève du poids ou retire le sac.",
   ),
   ExerciceMaison(
-    nom: "Montées sur chaise",
-    muscles: "Cuisses, fessiers",
+    nom: "Dips sur chaise",
+    muscles: "Triceps, épaules",
     requis: ['chaise'],
     consigne:
-        "Face à la chaise, pose un pied dessus et monte en poussant dans ce pied. Redescends doucement, puis change de jambe.",
-    securite: "Chaise stable et calée contre un mur. Pose le pied entier sur l'assise.",
+        "Assis au bord d'une chaise, mains de chaque côté des hanches. Glisse le bassin devant la chaise, plie les coudes pour descendre, puis repousse.",
+    securite:
+        "Chaise calée contre un mur. Ne descends pas sous un angle de 90° aux coudes et arrête si l'épaule tire ou pince.",
+  ),
+  ExerciceMaison(
+    nom: "Développé épaules",
+    muscles: "Épaules, triceps",
+    auChoix: ['bidon5l', 'bouteilles'],
+    consigne:
+        "Debout ou assis, charge à hauteur d'épaules. Pousse vers le haut jusqu'à bras tendus, puis redescends en contrôlant.",
+    securite: "Ne cambre pas le dos. Si ça tire dans le bas du dos, allège.",
+  ),
+  ExerciceMaison(
+    nom: "Élévations latérales",
+    muscles: "Épaules",
+    requis: ['bouteilles'],
+    consigne:
+        "Une bouteille par main, bras le long du corps. Monte les bras sur les côtés jusqu'à hauteur d'épaules, puis redescends doucement.",
+    securite:
+        "Garde les coudes légèrement fléchis et évite de hausser les épaules.",
+  ),
+  ExerciceMaison(
+    nom: "Extension triceps au-dessus de la tête",
+    muscles: "Triceps",
+    auChoix: ['bidon5l', 'bouteilles'],
+    consigne:
+        "Debout, tiens la charge à deux mains derrière la tête, coudes pointés vers le plafond. Tends les bras vers le haut, puis redescends lentement derrière la tête.",
+    securite:
+        "Garde les coudes près des oreilles, sans cambrer. Choisis une charge que tu tiens fermement.",
+  ),
+
+  // ---------- Tirer ----------
+  ExerciceMaison(
+    nom: "Tractions",
+    muscles: "Dos, biceps",
+    requis: ['barreTraction'],
+    consigne:
+        "Suspendu à la barre, mains un peu plus larges que les épaules. Tire jusqu'à passer le menton au-dessus de la barre, puis redescends lentement.",
+    securite:
+        "Descends toujours en contrôle et vérifie la barre avant de commencer.",
+  ),
+  ExerciceMaison(
+    nom: "Tractions lestées",
+    muscles: "Dos, biceps",
+    requis: ['barreTraction'],
+    auChoix: ['sacLeste'],
+    consigne:
+        "Mets le sac lesté sur le dos, bien serré, puis fais des tractions comme d'habitude, en commençant avec une charge légère.",
+    securite:
+        "Réservé à ceux qui enchaînent déjà plusieurs tractions propres sans charge. Le sac ne doit pas bouger pendant le mouvement. Augmente la charge très progressivement.",
+  ),
+  ExerciceMaison(
+    nom: "Rowing avec élastique",
+    muscles: "Dos, biceps",
+    requis: ['elastique'],
+    consigne:
+        "Fixe l'élastique devant toi à hauteur de poitrine. Tire les coudes vers l'arrière en serrant les omoplates, puis reviens lentement.",
+    securite: "Vérifie que l'attache de l'élastique est solide.",
+  ),
+  ExerciceMaison(
+    nom: "Rowing inversé sous la table",
+    muscles: "Dos, biceps",
+    requis: ['table'],
+    consigne:
+        "Allonge-toi sous la table, saisis le bord et tire la poitrine vers le plateau, corps gainé, puis redescends doucement.",
+    securite:
+        "Table très stable et lourde, sinon renonce. Pas de table en verre ni à rallonges. Garde la tête sous contrôle pour ne pas cogner le plateau.",
+  ),
+  ExerciceMaison(
+    nom: "Rowing unilatéral",
+    muscles: "Dos, biceps",
+    requis: ['chaise'],
+    auChoix: ['bidon5l', 'bouteilles'],
+    consigne:
+        "Une main et un genou sur l'assise de la chaise, dos plat. De l'autre main, tiens la charge le bras tendu vers le sol, puis tire le coude vers le plafond en serrant l'omoplate, et redescends.",
+    securite:
+        "Chaise calée contre un mur. Garde le dos plat et évite de tourner le buste pour aider le mouvement.",
+  ),
+  ExerciceMaison(
+    nom: "Haussements d'épaules",
+    muscles: "Trapèzes",
+    auChoix: ['bouteilles', 'bidon5l'],
+    consigne:
+        "Debout, une charge dans chaque main (ou le bidon devant toi à deux mains), bras le long du corps. Monte les épaules vers les oreilles, marque une pause, puis redescends lentement.",
+    securite:
+        "Fais le mouvement vers le haut, sans rouler les épaules. Garde le cou détendu.",
+  ),
+
+  // ---------- Bras ----------
+  ExerciceMaison(
+    nom: "Curl biceps",
+    muscles: "Biceps",
+    auChoix: ['bidon5l', 'packEau', 'bouteilles', 'sacLeste'],
+    consigne:
+        "Debout, tiens ta charge le long du corps, coudes collés aux côtés. Plie les coudes pour monter la charge vers les épaules, puis redescends lentement.",
+    securite: "Dos droit, sans balancer le corps pour aider le mouvement.",
+  ),
+  ExerciceMaison(
+    nom: "Curl biceps avec élastique",
+    muscles: "Biceps",
+    requis: ['elastique'],
+    consigne:
+        "Debout, un pied (ou les deux) posé sur le milieu de l'élastique, une extrémité dans chaque main. Plie les coudes pour monter les mains vers les épaules, puis redescends lentement.",
+    securite:
+        "Garde les coudes contre le corps et vérifie que l'élastique est bien calé sous le pied.",
+  ),
+
+  // ---------- Abdominaux et gainage ----------
+  ExerciceMaison(
+    nom: "Crunch lesté",
+    muscles: "Abdominaux",
+    auChoix: ['bouteilles', 'bidon5l'],
+    consigne:
+        "Allongé sur le dos, genoux pliés, charge tenue contre la poitrine. Soulève les épaules du sol en contractant les abdominaux, puis redescends lentement.",
+    securite:
+        "Ne tire pas sur la nuque. Commence avec la charge la plus légère.",
+  ),
+  ExerciceMaison(
+    nom: "Relevés de genoux suspendu",
+    muscles: "Abdominaux, fléchisseurs de hanche",
+    requis: ['barreTraction'],
+    consigne:
+        "Suspendu à la barre, épaules actives. Monte les genoux vers la poitrine en enroulant le bassin, puis redescends lentement sans te balancer.",
+    securite:
+        "Vérifie la fixation de la barre. Arrête si les poignets ou les épaules tirent.",
+  ),
+  ExerciceMaison(
+    nom: "Mountain climbers glissés",
+    muscles: "Abdominaux, épaules, cardio",
+    requis: ['serviette'],
+    consigne:
+        "En position de pompe, pieds posés sur la serviette, sur un sol lisse. Ramène un genou vers la poitrine en glissant le pied, puis l'autre, en alternance.",
+    securite:
+        "Sol lisse et sec, sans tapis. Commence lentement et arrête si les pieds filent trop.",
+  ),
+  ExerciceMaison(
+    nom: "Marche du fermier",
+    muscles: "Avant-bras, trapèzes, gainage",
+    auChoix: ['bidon5l', 'packEau', 'bouteilles'],
+    consigne:
+        "Debout, tiens une charge dans chaque main (ou une seule, puis change de main). Marche 20 à 30 pas, buste droit et épaules basses.",
+    securite:
+        "Prends une charge que tu tiens fermement. Dégage le passage et évite les sols glissants.",
+  ),
+  ExerciceMaison(
+    nom: "Marche latérale avec élastique",
+    muscles: "Fessiers, hanches",
+    requis: ['elastique'],
+    consigne:
+        "Passe l'élastique autour des cuisses, au-dessus des genoux. Pieds écartés, genoux légèrement fléchis, fais des pas latéraux en gardant l'élastique tendu.",
+    securite:
+        "Les genoux restent dans l'axe des pieds et le buste droit. Vérifie que l'élastique est en bon état.",
   ),
 ];
