@@ -250,7 +250,7 @@ class EquipementPage extends StatelessWidget {
               child: ModelViewer(
                 src: 'assets/models/lat_pulldown.glb',
                 alt: 'Modèle 3D de la machine de tirage vertical',
-                autoRotate: true,
+                autoPlay: true,
                 cameraControls: true,
                 backgroundColor: const Color(0xFFEEEEEE),
               ),
