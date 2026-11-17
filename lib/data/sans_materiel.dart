@@ -26,6 +26,22 @@ const List<Exercice> cardioExercices = [
     conseil: "Pose l'avant du pied, pas le talon, pour amortir.",
   ),
   Exercice(
+    nom: "Corde à sauter imaginaire",
+    duree: "40 secondes",
+    zone: "Mollets, épaules, cardio",
+    consigne:
+        "Mime le saut à la corde : petits sauts légers sur la pointe des pieds, en faisant tourner les poignets comme si tu tenais une corde.",
+    conseil: "Garde des sauts bas et des genoux souples, sans crisper les épaules.",
+  ),
+  Exercice(
+    nom: "Pas chassés latéraux",
+    duree: "30 secondes",
+    zone: "Cuisses, fessiers, cardio",
+    consigne:
+        "Appuis légèrement fléchis, déplace-toi de côté sur 3 à 4 pas rapides, puis reviens dans l'autre sens, sans croiser les pieds.",
+    conseil: "Reste bas, buste droit et regard devant toi.",
+  ),
+  Exercice(
     nom: "Mountain climbers",
     duree: "30 secondes",
     zone: "Abdominaux, épaules, cardio",
@@ -56,6 +72,14 @@ const List<Exercice> cardioExercices = [
     consigne:
         "Saute latéralement d'une jambe sur l'autre en gardant le buste légèrement penché, comme un patineur. La jambe arrière passe derrière, sans toucher le sol.",
     conseil: "Si c'est trop intense, pose le pied au sol à chaque appui.",
+  ),
+  Exercice(
+    nom: "Sprint sur place",
+    duree: "20 secondes",
+    zone: "Jambes, cardio",
+    consigne:
+        "Cours sur place le plus vite possible, avec des appuis courts et des bras qui travaillent à fond.",
+    conseil: "Garde l'effort court et récupère complètement avant de recommencer.",
   ),
   Exercice(
     nom: "Boxe dans le vide",
@@ -117,6 +141,14 @@ const List<Exercice> streetWorkoutExercices = [
     conseil: "Pose le genou du dessous au sol pour une version plus facile.",
   ),
   Exercice(
+    nom: "Planche avec touchers d'épaule",
+    duree: "3 séries de 10 par côté",
+    zone: "Abdominaux, épaules, gainage",
+    consigne:
+        "En position de planche sur les mains, pieds écartés. Touche ton épaule gauche avec la main droite, puis l'inverse, en gardant le bassin immobile.",
+    conseil: "Écarte les pieds pour être plus stable : le bassin ne doit pas se balancer.",
+  ),
+  Exercice(
     nom: "Hollow body",
     duree: "3 séries de 20 à 30 secondes",
     zone: "Abdominaux profonds",
@@ -160,6 +192,30 @@ const List<Exercice> homeWorkoutExercices = [
     conseil: "Buste droit, genou avant au-dessus du pied.",
   ),
   Exercice(
+    nom: "Fentes marchées",
+    duree: "3 séries de 10 par jambe",
+    zone: "Cuisses, fessiers",
+    consigne:
+        "Fais un grand pas en avant, descends le genou arrière vers le sol, puis avance en poussant dans le pied avant pour enchaîner avec l'autre jambe.",
+    conseil: "Garde le buste droit et fais des pas assez grands pour que le genou avant reste au-dessus du pied.",
+  ),
+  Exercice(
+    nom: "Chaise contre un mur",
+    duree: "3 séries de 30 à 45 secondes",
+    zone: "Cuisses, fessiers",
+    consigne:
+        "Dos contre un mur, descends jusqu'à avoir les cuisses parallèles au sol, comme assis sur une chaise invisible. Tiens la position.",
+    conseil: "Les genoux restent au-dessus des chevilles.",
+  ),
+  Exercice(
+    nom: "Montées sur pointes",
+    duree: "3 séries de 15",
+    zone: "Mollets",
+    consigne:
+        "Debout, pieds à la largeur des hanches. Monte sur la pointe des pieds le plus haut possible, marque une pause, puis redescends lentement.",
+    conseil: "Appuie-toi à un mur si besoin et garde les chevilles bien droites.",
+  ),
+  Exercice(
     nom: "Pont fessier",
     duree: "3 séries de 15",
     zone: "Fessiers, ischio-jambiers",
@@ -174,6 +230,14 @@ const List<Exercice> homeWorkoutExercices = [
     consigne:
         "Comme le pont fessier, mais une jambe tendue en l'air. Pousse avec le pied au sol pour lever le bassin.",
     conseil: "Garde le bassin bien horizontal.",
+  ),
+  Exercice(
+    nom: "Pompes inclinées (mains au mur)",
+    duree: "3 séries de 12",
+    zone: "Pectoraux, triceps, épaules",
+    consigne:
+        "Debout face à un mur, mains appuyées à hauteur de poitrine, pieds reculés. Plie les coudes pour rapprocher la poitrine du mur, puis repousse.",
+    conseil: "Plus tu recules les pieds, plus c'est difficile. Passe ensuite aux pompes sur les genoux.",
   ),
   Exercice(
     nom: "Pompes sur les genoux",
@@ -208,19 +272,19 @@ const List<Exercice> homeWorkoutExercices = [
     conseil: "Regarde le sol pour garder la nuque dans l'axe.",
   ),
   Exercice(
-    nom: "Chaise contre un mur",
-    duree: "3 séries de 30 à 45 secondes",
-    zone: "Cuisses, fessiers",
-    consigne:
-        "Dos contre un mur, descends jusqu'à avoir les cuisses parallèles au sol, comme assis sur une chaise invisible. Tiens la position.",
-    conseil: "Les genoux restent au-dessus des chevilles.",
-  ),
-  Exercice(
     nom: "Crunchs",
     duree: "3 séries de 15",
     zone: "Abdominaux",
     consigne:
         "Allongé sur le dos, genoux pliés, mains près des tempes. Soulève les épaules du sol en contractant les abdominaux, puis redescends lentement.",
     conseil: "Ne tire pas sur la nuque, regarde vers le plafond.",
+  ),
+  Exercice(
+    nom: "Relevés de jambes allongé",
+    duree: "3 séries de 10",
+    zone: "Bas des abdominaux",
+    consigne:
+        "Allongé sur le dos, mains sous les fesses, jambes tendues. Lève les jambes à la verticale, puis redescends lentement sans toucher le sol.",
+    conseil: "Si ton bas du dos se creuse, plie un peu les genoux.",
   ),
 ];
