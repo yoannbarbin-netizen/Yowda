@@ -9,6 +9,8 @@ import 'package:appli_muscu/fiches_poids_libres_b.dart';
 import 'package:appli_muscu/fiches_poids_libres_c.dart';
 import 'package:appli_muscu/fiches_cardio_a.dart';
 import 'package:appli_muscu/fiches_cardio_b.dart';
+import 'package:appli_muscu/fiches_accessoires_a.dart';
+import 'package:appli_muscu/fiches_accessoires_b.dart';
 
 export 'package:appli_muscu/fiche_modele.dart';
 
@@ -23,4 +25,6 @@ final Map<String, FicheExercice> fiches = {
   ...fichesPoidsLibresC,
   ...fichesCardioA,
   ...fichesCardioB,
+  ...fichesAccessoiresA,
+  ...fichesAccessoiresB,
 };
