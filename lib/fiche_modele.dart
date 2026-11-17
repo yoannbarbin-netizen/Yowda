@@ -52,7 +52,7 @@ class FichePage extends StatelessWidget {
                 Icon(Icons.play_circle_outline,
                     size: 56, color: couleurs.primary),
                 const SizedBox(height: 8),
-                const Text('Illustration / animation � venir'),
+                const Text('Illustration / animation à venir'),
               ],
             ),
           ),
@@ -68,7 +68,7 @@ class FichePage extends StatelessWidget {
           Text(fiche.musclesPrincipaux),
           _titre(context, 'Muscles secondaires'),
           Text(fiche.musclesSecondaires),
-          _titre(context, 'Ex�cution'),
+          _titre(context, 'Exécution'),
           for (var i = 0; i < fiche.etapes.length; i++)
             Padding(
               padding: const EdgeInsets.only(bottom: 8),
@@ -83,7 +83,7 @@ class FichePage extends StatelessWidget {
             ),
           _titre(context, 'Respiration'),
           Text(fiche.respiration),
-          _titre(context, 'Erreurs fr�quentes'),
+          _titre(context, 'Erreurs fréquentes'),
           for (final e in fiche.erreurs)
             Padding(
               padding: const EdgeInsets.only(bottom: 6),

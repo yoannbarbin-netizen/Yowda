@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:model_viewer_plus/model_viewer_plus.dart';
+import 'fiches.dart';
 
 class Equipement {
   final String nom;
@@ -280,11 +281,25 @@ class EquipementPage extends StatelessWidget {
           Text('Exercices possibles',
               style: Theme.of(context).textTheme.titleMedium),
           const SizedBox(height: 8),
-          for (var i = 0; i < equipement.exercices.length; i++)
+                    for (var i = 0; i < equipement.exercices.length; i++)
             Card(
               child: ListTile(
                 leading: CircleAvatar(child: Text('${i + 1}')),
                 title: Text(equipement.exercices[i]),
+                trailing: fiches.containsKey(equipement.exercices[i])
+                    ? const Icon(Icons.chevron_right)
+                    : null,
+                onTap: fiches.containsKey(equipement.exercices[i])
+                    ? () => Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => FichePage(
+                              nom: equipement.exercices[i],
+                              fiche: fiches[equipement.exercices[i]]!,
+                            ),
+                          ),
+                        )
+                    : null,
               ),
             ),
         ],
