@@ -2,6 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:model_viewer_plus/model_viewer_plus.dart';
 import 'fiches.dart';
 
+const Map<String, String> modeles3d = {
+  'Tirage vertical': 'assets/models/lat_pulldown.glb',
+  'Leg Press': 'assets/models/leg_press_machine.glb',
+  'Leg extension': 'assets/models/leg_extension.glb',
+  'Leg curl': 'assets/models/seated_leg_curl_trainer.glb',
+};
+
 class Equipement {
   final String nom;
   final String muscles;
@@ -18,7 +25,7 @@ class CategorieSalle {
 
 const categoriesSalle = [
   CategorieSalle('Machines guidées', Icons.settings, [
-    Equipement('Presse à cuisses', 'Quadriceps, fessiers', [
+    Equipement('Leg Press', 'Quadriceps, fessiers', [
       'Presse jambes classique',
       'Presse pieds hauts (fessiers)',
       'Presse pieds serrés (quadriceps)',
@@ -245,11 +252,11 @@ class EquipementPage extends StatelessWidget {
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
-         if (equipement.nom == 'Tirage vertical')
+         if (modeles3d.containsKey(equipement.nom))
             SizedBox(
               height: 300,
               child: ModelViewer(
-                src: 'assets/models/lat_pulldown.glb',
+                src: modeles3d[equipement.nom]!,
                 alt: 'Modèle 3D de la machine de tirage vertical',
                 autoPlay: true,
                 cameraControls: true,
