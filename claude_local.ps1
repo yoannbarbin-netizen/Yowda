@@ -3,6 +3,7 @@ $env:ANTHROPIC_BASE_URL = "http://127.0.0.1:1234"
 $env:ANTHROPIC_AUTH_TOKEN = "lmstudio"
 $env:CLAUDE_CODE_ATTRIBUTION_HEADER = "0"
 $env:CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC = "1"
+$env:CLAUDE_CODE_AUTO_COMPACT_WINDOW = "100000"
 
 # Récupération de la liste des modèles du serveur LM Studio
 try {
