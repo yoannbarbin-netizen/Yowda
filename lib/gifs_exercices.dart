@@ -18,5 +18,4 @@ const Map<String, String> gifsExercices = {
   'Développé décliné barre': 'assets/gifs/developpe_decline_barre.gif',
   'Développé militaire assis': 'assets/gifs/developpe_militaire_assis.gif',
   'Crunch incliné': 'assets/gifs/crunch_incline.gif',
-  'Adduction assise': 'assets/gifs/adduction_assise.gif',
 };
