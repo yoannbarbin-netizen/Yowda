@@ -7,6 +7,21 @@ const Map<String, String> modeles3d = {
   'Leg Press': 'assets/models/leg_press_machine.glb',
   'Leg extension': 'assets/models/leg_extension.glb',
   'Leg curl': 'assets/models/seated_leg_curl_trainer.glb',
+  'Chest press': 'assets/models/chest_press.glb',
+  'Pec deck': 'assets/models/pec_deck.glb',
+  'Shoulder press': 'assets/models/shoulder_press.glb',
+  'Tirage horizontal': 'assets/models/seated_cable_row.glb',
+  'Abducteurs / adducteurs': 'assets/models/seated_hip_abductor.glb',
+  'Poulie haute (tirage)': 'assets/models/vertical_lat_pulldown.glb',
+  'Poulie basse': 'assets/models/low_pulley.glb',
+  'Vis-à-vis (câbles croisés)': 'assets/models/cable_crossover.glb',
+  'Extension triceps à la corde': 'assets/models/triceps_pushdown.glb',
+  'Face pull': 'assets/models/face_pull_station.glb',
+  'Tapis de course': 'assets/models/treadmill.glb',
+  'Vélo': 'assets/models/stationary_fitness_bike.glb',
+  'Rameur': 'assets/models/indoor_rowing_machine.glb',
+  'Elliptique': 'assets/models/elliptical_cross_trainer.glb',
+  'Stepper': 'assets/models/stair_stepper.glb',
 };
 
 class Equipement {
@@ -257,7 +272,7 @@ class EquipementPage extends StatelessWidget {
               height: 300,
               child: ModelViewer(
                 src: modeles3d[equipement.nom]!,
-                alt: 'Modèle 3D de la machine de tirage vertical',
+                alt: 'Modèle 3D : ${equipement.nom}',
                 autoPlay: true,
                 cameraControls: true,
                 backgroundColor: const Color(0xFFEEEEEE),
