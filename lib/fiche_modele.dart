@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'gifs_exercices.dart';
 
 class FicheExercice {
   final String niveau;
@@ -40,7 +41,24 @@ class FichePage extends StatelessWidget {
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
-          Container(
+          if (gifsExercices.containsKey(nom))
+            ClipRRect(
+              borderRadius: BorderRadius.circular(16),
+              child: Container(
+                height: 260,
+                width: double.infinity,
+                color: const Color(0xFFEEEEEE),
+                child: Image.asset(
+                  gifsExercices[nom]!,
+                  fit: BoxFit.contain,
+                  gaplessPlayback: true,
+                  errorBuilder: (context, error, stack) =>
+                      const Center(child: Text('Animation indisponible')),
+                ),
+              ),
+            )
+          else
+            Container(
             height: 180,
             decoration: BoxDecoration(
               color: couleurs.surfaceContainerHighest,

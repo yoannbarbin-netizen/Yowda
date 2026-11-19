@@ -1,0 +1,21 @@
+// Fichier genere par le script GIF : nom exact de l'exercice -> GIF.
+const Map<String, String> gifsExercices = {
+  'Presse jambes classique': 'assets/gifs/presse_jambes_classique.gif',
+  'Extension de jambes à deux jambes': 'assets/gifs/extension_jambes_deux_jambes.gif',
+  'Curl assis': 'assets/gifs/curl_assis.gif',
+  'Développé machine prise neutre': 'assets/gifs/developpe_machine_prise_neutre.gif',
+  'Écartés à la machine': 'assets/gifs/ecartes_machine.gif',
+  'Développé épaules assis': 'assets/gifs/developpe_epaules_assis.gif',
+  'Tirage prise large': 'assets/gifs/tirage_prise_large.gif',
+  'Abduction assise': 'assets/gifs/abduction_assise.gif',
+  'Tirage nuque / poitrine': 'assets/gifs/tirage_nuque_poitrine.gif',
+  'Rowing à la poulie basse': 'assets/gifs/rowing_poulie_basse.gif',
+  'Écartés poulies hautes': 'assets/gifs/ecartes_poulies_hautes.gif',
+  'Extension corde vers le bas': 'assets/gifs/extension_corde_bas.gif',
+  'Face pull à la corde': 'assets/gifs/face_pull_corde.gif',
+  'Développé couché barre': 'assets/gifs/developpe_couche_barre.gif',
+  'Développé incliné haltères': 'assets/gifs/developpe_incline_halteres.gif',
+  'Développé décliné barre': 'assets/gifs/developpe_decline_barre.gif',
+  'Développé militaire assis': 'assets/gifs/developpe_militaire_assis.gif',
+  'Crunch incliné': 'assets/gifs/crunch_incline.gif',
+};
