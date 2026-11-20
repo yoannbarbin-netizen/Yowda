@@ -13,6 +13,7 @@ class AppliMuscu extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
+      builder: (context, child) => SafeArea(top: false, child: child!),
       title: 'Appli Muscu',
       debugShowCheckedModeBanner: false,
       theme: ThemeData(colorSchemeSeed: Colors.deepOrange, useMaterial3: true),
