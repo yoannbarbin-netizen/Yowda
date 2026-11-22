@@ -22,6 +22,21 @@ const Map<String, String> modeles3d = {
   'Rameur': 'assets/models/indoor_rowing_machine.glb',
   'Elliptique': 'assets/models/elliptical_cross_trainer.glb',
   'Stepper': 'assets/models/stair_stepper.glb',
+  'Barre droite': 'assets/models/olympic_barbell_four_weight_plates.glb',
+  'Haltères': 'assets/models/pair_of_professional_hex_dumbbells.glb',
+  'Barre de traction': 'assets/models/professional_freestanding_pull_up_bar.glb',
+  'Rack à squat': 'assets/models/squat_rack.glb',
+  'Élastiques': 'assets/models/resistance_bands.glb',
+  'Barre EZ': 'assets/models/ez_curl_bar.glb',
+  'Kettlebell': 'assets/models/kettlebell.glb',
+  'Banc plat': 'assets/models/flat_weight_bench.glb',
+  'Banc incliné': 'assets/models/incline_bench.glb',
+  'Banc décliné': 'assets/models/decline_weight_bench.glb',
+  'Banc réglable (dossier)': 'assets/models/incline_bench.glb',
+  'Banc à abdos': 'assets/models/abdominal_bench.glb',
+  'Corde à sauter': 'assets/models/fitness_jump_rope.glb',
+  'Swiss ball': 'assets/models/swiss_stability_ball.glb',
+  'Rouleau de massage': 'assets/models/foam_roller.glb',
 };
 
 class Equipement {
