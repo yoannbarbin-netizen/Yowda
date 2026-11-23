@@ -7,7 +7,7 @@ Tu ne modifies AUCUN fichier. Réponds en français, rapport court.
 
 Contrôles :
 1. git status --short et git log --oneline -8.
-2. flutter analyze : attendu 8 infos deprecated_member_use. Au-delà, cherche la cause (ex. dossier de backup à l'intérieur du projet).
+2. flutter analyze : attendu 7 infos deprecated_member_use. Au-delà, cherche la cause (ex. dossier de backup à l'intérieur du projet).
 3. Chaque chemin assets/... cité dans lib/gifs_exercices.dart et lib/salle_page.dart existe bien.
 4. Fichiers de assets/gifs et assets/models non référencés dans les tables.
 5. Clés en double dans les tables, nombre de lignes de chaque table.

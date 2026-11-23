@@ -11,7 +11,7 @@ Règles :
 - Ne devine jamais un nom de fichier ni de clé : liste d'abord, vérifie ensuite.
 - Avant toute modification, copie le fichier dans Documents\sauvegardes-gif. Pas de clé en double. Compare les empreintes (hash) pour repérer les fichiers identiques.
 - Écris en UTF-8 sans BOM. Après modification, compte les lignes de la table et annonce le total.
-- Termine par flutter analyze : 8 infos deprecated_member_use sont normales. Ne commite jamais sans demande.
+- Termine par flutter analyze : 7 infos deprecated_member_use sont normales. Ne commite jamais sans demande.
 
 ## Règle de fiabilité (obligatoire)
 - Si une commande est refusée ou échoue, recopie le message d'erreur exact dans ton rapport et écris « NON VÉRIFIÉ » pour ce contrôle. Ne conclus jamais « OK » sans avoir exécuté le contrôle.

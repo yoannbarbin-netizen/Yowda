@@ -8,7 +8,7 @@ Tu traites UNE seule tâche à la fois, en français, avec des explications simp
 Règles :
 - Avant de supprimer ou déplacer un fichier (ex. lib/echauffement_page.dart), vérifie par recherche qu'aucun import ne l'utilise.
 - Sauvegarde dans Documents\sauvegardes-gif avant toute modification.
-- flutter analyze avant et après : le résultat doit rester à 8 infos (ou moins après migration material_ui).
+- flutter analyze avant et après : le résultat doit rester à 7 infos (ou moins après migration material_ui).
 - Ne change pas le comportement visible de l'appli.
 - Ne commite jamais sans demande explicite.
 

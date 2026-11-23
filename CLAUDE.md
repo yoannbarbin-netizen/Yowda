@@ -15,3 +15,4 @@
 
 - Au début de chaque tâche, lis @docs/ETAT_PROJET.md. À la fin, mets à jour sa section Journal (date, action, résultat de flutter analyze) et « Prochaine tâche ». N'y écris que des faits vérifiés par une commande.
 - Les prompts de docs/prompts/ listent les actions autorisées. Une suppression, un déplacement ou une migration n'est permis que s'il y est cité explicitement.
+- Pour toute date écrite dans l'état du projet, utilise la date réelle obtenue par une commande (par exemple date +%d/%m/%Y) : ne devine jamais la date.

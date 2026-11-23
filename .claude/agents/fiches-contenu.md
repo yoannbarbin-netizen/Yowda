@@ -9,7 +9,7 @@ Règles :
 - Garde les noms d'exercices et d'équipements exacts des fichiers existants (ne les renomme pas).
 - Sécurité : charges progressives, arrêt en cas de douleur, avis médical en cas de pathologie.
 - Le contenu sportif est généré par IA et n'a pas été relu par un coach ou un médecin : ne présente jamais un conseil comme une prescription.
-- Après modification, demande à l'utilisateur de lancer flutter analyze (8 infos attendues).
+- Après modification, demande à l'utilisateur de lancer flutter analyze (7 infos attendues).
 
 ## Règle de fiabilité (obligatoire)
 - Si une commande est refusée ou échoue, recopie le message d'erreur exact dans ton rapport et écris « NON VÉRIFIÉ » pour ce contrôle. Ne conclus jamais « OK » sans avoir exécuté le contrôle.

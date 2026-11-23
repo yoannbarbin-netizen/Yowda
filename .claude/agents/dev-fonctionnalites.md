@@ -8,7 +8,7 @@ Tu développes pour un utilisateur qui ne code pas : français, tutoiement, une 
 Règles :
 - Projet Android d'abord (iOS plus tard). Petits changements, faciles à tester sur l'émulateur.
 - Sauvegarde dans Documents\sauvegardes-gif avant de modifier un fichier.
-- Teste avec flutter analyze (8 infos attendues), puis flutter run. Teste aussi en flutter run --release sur téléphone quand la fonctionnalité touche au réseau, aux assets ou au manifeste.
+- Teste avec flutter analyze (7 infos attendues), puis flutter run. Teste aussi en flutter run --release sur téléphone quand la fonctionnalité touche au réseau, aux assets ou au manifeste.
 - Ne commite jamais sans demande explicite.
 
 ## Règle de fiabilité (obligatoire)

@@ -1,6 +1,6 @@
 # État du projet (source de vérité, à tenir à jour)
 
-Dernière mise à jour : 24/11/2026
+Dernière mise à jour : 23/11/2026
 
 ## Contexte
 - Appli Flutter Android « Appli Muscu » (iOS plus tard), version 1.0.0+1, Git local, branche master.
@@ -15,7 +15,7 @@ Dernière mise à jour : 24/11/2026
 ## Décisions
 - Fractionné et Course continue partagent course_continue.gif (volontaire).
 - Allègement des GLB lourds (leg_extension 22,6 Mo, lat_pulldown 11,5 Mo) reporté à une grosse sortie de version.
-- flutter analyze : 7 infos deprecated_member_use (après suppression du code mort).
+- flutter analyze : 7 infos deprecated_member_use attendues, une par fichier qui importe package:flutter/material.dart (elles disparaissent avec la migration vers material_ui). Ce nombre change si un lot ajoute ou retire un fichier important material.dart : le prompt du lot donne alors la valeur attendue.
 - Les clés des fiches doivent rester identiques au caractère près aux noms d'exercices de salle_page.dart.
 
 ## Structure actuelle de lib/ (avant refactor)
@@ -28,7 +28,7 @@ Lots prévus (provisoire, à valider avec Yo) : 1 code mort ; 2 modèles ; 3 don
 
 ## Journal
 - 23/11/2026 : commits 3287387 (GIF), dcd0fa0 (agents), f66b861 (retrait d'un GLB inutile). Inventaire de lib/ fait.
-- 24/11/2026 : Lot 1 exécuté — suppression de `lib/echauffement_page.dart` (code mort, non importé). `flutter analyze` : 7 infos `deprecated_member_use`.
+- 23/11/2026 : Lot 1 exécuté — suppression de `lib/echauffement_page.dart` (code mort, non importé). `flutter analyze` : 7 infos `deprecated_member_use`.
 
 ## Prochaine tâche
 - Valider l'architecture cible avec Yo.
