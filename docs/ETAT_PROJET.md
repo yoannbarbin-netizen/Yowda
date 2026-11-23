@@ -1,6 +1,6 @@
 # État du projet (source de vérité, à tenir à jour)
 
-Dernière mise à jour : 23/11/2026
+Dernière mise à jour : 24/11/2026
 
 ## Contexte
 - Appli Flutter Android « Appli Muscu » (iOS plus tard), version 1.0.0+1, Git local, branche master.
@@ -15,11 +15,11 @@ Dernière mise à jour : 23/11/2026
 ## Décisions
 - Fractionné et Course continue partagent course_continue.gif (volontaire).
 - Allègement des GLB lourds (leg_extension 22,6 Mo, lat_pulldown 11,5 Mo) reporté à une grosse sortie de version.
-- flutter analyze : 8 infos deprecated_member_use attendues jusqu'à la migration vers material_ui.
+- flutter analyze : 7 infos deprecated_member_use (après suppression du code mort).
 - Les clés des fiches doivent rester identiques au caractère près aux noms d'exercices de salle_page.dart.
 
 ## Structure actuelle de lib/ (avant refactor)
-- À plat : main.dart, salle_page.dart, fiche_modele.dart, fiches.dart, 12 fichiers fiches_*.dart, gifs_exercices.dart, echauffement_page.dart (code mort).
+- À plat : main.dart, salle_page.dart, fiche_modele.dart, fiches.dart, 12 fichiers fiches_*.dart, gifs_exercices.dart.
 - data/ : echauffement, etirements, materiel_maison, sans_materiel. pages/ : 4 pages des autres sections.
 
 ## Chantier en cours : refactor de l'architecture
@@ -28,6 +28,7 @@ Lots prévus (provisoire, à valider avec Yo) : 1 code mort ; 2 modèles ; 3 don
 
 ## Journal
 - 23/11/2026 : commits 3287387 (GIF), dcd0fa0 (agents), f66b861 (retrait d'un GLB inutile). Inventaire de lib/ fait.
+- 24/11/2026 : Lot 1 exécuté — suppression de `lib/echauffement_page.dart` (code mort, non importé). `flutter analyze` : 7 infos `deprecated_member_use`.
 
 ## Prochaine tâche
-- Lot 1 : suppression de lib/echauffement_page.dart (docs/prompts/lot-01-code-mort.md).
+- Valider l'architecture cible avec Yo.
