@@ -8,7 +8,10 @@
 - Après chaque modification, lance flutter analyze et résume la sortie. Ne lance pas flutter run.
 - Ne jamais affirmer un fait sur la machine sans l'avoir vérifié par une commande.
 - Les fichiers sont en UTF-8 : garde les accents.
-- Structure : lib/salle_page.dart (équipements de la salle et table modeles3d des GLB), lib/fiches_*.dart + fiches.dart + fiche_modele.dart (fiches d'exercices), lib/data/ et lib/pages/ (autres sections).
+- Structure du projet et état d'avancement : voir @docs/ETAT_PROJET.md (source de vérité).
 - Les clés des fiches doivent être identiques au caractère près aux noms d'exercices de salle_page.dart.
 - Pour ajouter un GLB : copier le fichier dans assets/models/, puis ajouter une ligne dans la table modeles3d avec le nom exact de l'équipement.
 - L'info deprecated_member_use sur material.dart est connue : l'ignorer pour l'instant.
+
+- Au début de chaque tâche, lis @docs/ETAT_PROJET.md. À la fin, mets à jour sa section Journal (date, action, résultat de flutter analyze) et « Prochaine tâche ». N'y écris que des faits vérifiés par une commande.
+- Les prompts de docs/prompts/ listent les actions autorisées. Une suppression, un déplacement ou une migration n'est permis que s'il y est cité explicitement.
