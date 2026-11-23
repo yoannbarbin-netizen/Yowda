@@ -88,12 +88,6 @@ const Map<String, String> gifsExercices = {
   'Dos (haut)': 'assets/gifs/dos_haut.gif',
   'Curl pupitre': 'assets/gifs/barre_ez_curl_pupitre.gif',
   'Tractions supination (chin-up)': 'assets/gifs/barre_traction_suppination_chin_up.gif',
-  'Course sur tapis': 'assets/gifs/course_continue.gif',
-  'Fractionné (30 s / 30 s)': 'assets/gifs/course_continue.gif',
-  'Marche élastique': 'assets/gifs/marche_laterale.gif',
-  'Pédalage régulier (vélo)': 'assets/gifs/pedalage_regulier.gif',
-  'Rame continue (rameur)': 'assets/gifs/rame_continue.gif',
-  'Montée sur stepper': 'assets/gifs/montee_continue.gif',
-  'Marche élastique (fessiers)': 'assets/gifs/marche_laterale.gif',
   'Tirage bras tendus': 'assets/gifs/pull_over_poulie.gif',
+  'Fractionné (30 s / 30 s)': 'assets/gifs/course_continue.gif',
 };
