@@ -71,7 +71,7 @@ class _SessionActivePageState extends State<SessionActivePage> {
     "Fentes alternées",
     "Montées de genoux",
     "Jumping jacks",
-    // Étirements (14)
+    // Étirements (15)
     "Étirement des mollets",
     "Étirement des quadriceps",
     "Étirement des fléchisseurs de hanche",
@@ -86,7 +86,8 @@ class _SessionActivePageState extends State<SessionActivePage> {
     "Étirement des épaules (bras croisé)",
     "Étirement du triceps",
     "Étirement des avant-bras",
-    // Sans matériel — cardio (10, 2 déjà dans Échauffement)
+    "Étirement du cou",
+    // Sans matériel — cardio (9, 2 déjà dans Échauffement)
     "Talons-fesses",
     "Corde à sauter imaginaire",
     "Pas chassés latéraux",
