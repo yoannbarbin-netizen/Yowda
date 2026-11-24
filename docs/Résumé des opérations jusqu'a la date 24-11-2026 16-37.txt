@@ -1,0 +1,148 @@
+RÉSUMÉ DES OPÉRATIONS — Projet Appli Muscu Flutter
+Date: 24-11-2026 16-37
+Branche: refactor-architecture
+
+============================================================
+PROJET
+============================================================
+- App Flutter Android « Appli Muscu » v1.0.0+1
+- 5 sections: Échauffement, Salle, Matériel maison, Sans matériel, Étirements
+- Assets: 34 équipements salle avec modèles 3D (GLB), 90 GIFs exercices
+- Persistance: Hive (session_hive.dart + models/session.dart)
+- Refactor architecture en cours (6 lots prévus)
+
+============================================================
+STRUCTURE ACTUELLE DE lib/
+============================================================
+À plat: main.dart, salle_page.dart, fiche_modele.dart, fiches.dart, 12 fichiers fiches_*.dart, gifs_exercices.dart
+data/: session_hive.dart (persistance Hive)
+models/: session.dart (PerformedSet, PerformedExercise, WorkoutSession)
+pages/: echauffement_page.dart, etirements_page.dart, materiel_maison_page.dart, sans_materiel_page.dart, session_active_page.dart
+
+============================================================
+CODE MODIFIÉ / CRÉÉ (non commité)
+============================================================
+MODIFIÉS:
+- lib/fiche_modele.dart: +bouton "Ajouter à l'entraînement actif" dans AppBar actions
+- lib/main.dart: async avec Hive.initFlutter() + bouton entraînement actif
+- lib/salle_page.dart: correction syntaxe for-comprehension (plus de yield)
+- lib/pages/echauffement_page.dart: +bouton ajout entraînement actif
+- lib/pages/etirements_page.dart: +bouton ajout entraînement actif
+- lib/pages/materiel_maison_page.dart: +bouton ajout entraînement actif
+- lib/pages/sans_materiel_page.dart: +bouton ajout entraînement actif
+- pubspec.yaml / pubspec.lock: deps hive ajoutées
+- docs/ETAT_PROJET.md: journal mis à jour
+
+CRÉÉS:
+- lib/models/session.dart: 3 classes avec sérialisation JSON (PerformedSet, PerformedExercise, WorkoutSession)
+- lib/data/session_hive.dart: Singleton sessionStorage (Box Hive, sauvegarde/chargement/suppression sessions)
+- lib/pages/session_active_page.dart: ~490 lignes, écran de séance active
+
+============================================================
+SESSION_ACTIVE_PAGE.DART — Fonctionnalités implémentées
+============================================================
+- Sélection d'exercices hiérarchique (copie structure categoriesSalle)
+- Ajout de séries: poids en kg + répétitions OU durée en secondes
+- Détection exercices durée via Set<String> (62 noms uniques): 62-exercice-duree
+- Suppression par swiping (Dismissible)
+- Timer temps réel pendant la séance
+- Sauvegarde automatique Hive à chaque set validé
+- Terminaison avec confirmation + navigation vers bilan
+- UI harmonisée: durée affichée pour exercices durée, poids+reps pour les autres
+
+============================================================
+BUGS CORRIGÉS (dans conversations précédentes)
+============================================================
+BUG #1: session_hive.dart try/catch + null-safety models/session.dart
+  - SessionStorage manquait try/catch dans chargerToutes() et charger()
+  - fromJson() sans valeur par défaut pour champs null
+  FIX: try/catch avec debugPrint dans session_hive.dart; defaults entiers(0) et listes([]) dans models/session.dart; import flutter/foundation.dart ajouté
+
+BUG #2: Cohérence exercices durée dans session_active_page.dart
+  - Détection des exercices durée incohérente entre dialogue et affichage
+  FIX: Set<String> unique avec 62 noms d'exercices durée vérifié partout
+
+BUG #3: Cohérence Étirements/Échauffement dans ajout entraînement actif
+  - Exercices de type "durée" demandaient poids/reps au lieu de durée/seconde
+  - Affichage UI incohérent entre série liste et bilan
+  FIX: Dialogue adapté (durée en secondes), affichage harmonisé
+
+============================================================
+ERREURS DE COMPRÉHENSION / ÉCHECS RÉCURRENTS
+============================================================
+1. ETAT_PROJET.md incohérent avec état réel du dépôt
+   - Journal disait "Lot 2 réclamé mais non vérifié — dossier lib/models/ n'existe pas"
+   - Mais le dossier a été créé dans une session précédente sans mise à jour du journal
+   LEÇON: Toujours vérifier l'état réel du filesystem avant d'écrire dans ETAT_PROJET.md
+
+2. yield utilisé dans for-comprehension non-générateur (salle_page.dart)
+   - yield est syntaxe de générateur, pas de liste régulière
+   FIX: remplacé par construction de liste standard
+
+3. Champ _sessionStartTime inutilisé déclenchant warning unused_element
+   LEÇON: Supprimer les champs non utilisés immédiatement pour garder flutter analyze clean
+
+============================================================
+FEATURES AJOUTÉES (récentes)
+============================================================
+1. Bouton "Ajouter à l'entraînement actif" sur chaque fiche d'exercice
+   Pattern: Row avec IconButton(fitness_center) + chevron_right dans trailing des ListTile/ExpansionTile; IconButton dans AppBar actions pour pages détail
+   Fichiers touchés: 5 sections (fiche_modele.dart, echauffement_page.dart, etirements_page.dart, materiel_maison_page.dart, sans_materiel_page.dart)
+
+2. Mode Entraînement Actif — Phase 3 terminée
+   Écran de séance active complet avec sélection exercices, ajout séries, timer, sauvegarde Hive
+
+============================================================
+PHASES RESTANTES MODE ENTRAÎNEMENT ACTIF
+============================================================
+Phase 4: Session bilan (écran résumé en fin de séance)
+Phase 5: Vérification manuelle complète (correctness, UX, persistance)
+
+============================================================
+CHANTIER REFACTOR EN PAUSE
+============================================================
+Lots prévus: 1(code mort→fait), 2(modèles), 3(données salle), 4(fiches regroupées), 5(pages), 6(migration material_ui)
+Lots 2 à 6 en attente après Phase 3 Entraînement Actif
+
+============================================================
+FLUTTER ANALYZE — État connu
+============================================================
+- Attendu: 8 infos deprecated_member_use (une par fichier qui importe package:flutter/material.dart)
+- Sources des 8 infos: 7 fichiers existants + session_active_page.dart
+- 0 erreurs, 0 warnings (hors deprecated_member_use connu)
+- Les 8 infos disparaîtront avec migration material_ui (Lot 6)
+- IMPORTANT: Ce nombre change si un lot ajoute/retire un fichier important material.dart
+
+============================================================
+CONVENTIONS CRITIQUES
+============================================================
+1. Clés des fiches DOIVENT être identiques au caractère près aux noms d'exercices de salle_page.dart
+2. Clé 62-exercice-duree utilisée pour détecter exercices durée (Set<String> dans session_active_page.dart)
+3. dates dans ETAT_PROJET.md: utiliser date réelle (Get-Date), jamais deviner
+4. Ne jamais lire fichiers .glb (binaires volumineux)
+5. Après chaque modification: lancer flutter analyze et résumer la sortie
+
+============================================================
+INSTRUCTIONS CLÉ POUR IA REPRISE
+============================================================
+1. Toujours lire ETAT_PROJET.md en premier — source de vérité du projet
+2. Branche active: refactor-architecture
+3. Ne JAMAIS supprimer/dplacer/migrer sans accord explicite (règle CLAUDE.md)
+4. flutter analyze à lancer après chaque modification — ne pas lancer flutter run
+5. Les fichiers non commité sont listés dans git status section "?? " et " M "
+6. Pour date: powershell -Command "(Get-Date).ToString('dd-MM-yyyy HH-mm')"
+7. SessionStorage singleton accessible via sessionStorage (lib/data/session_hive.dart)
+8. Modèles JSON: PerformedSet, PerformedExercise, WorkoutSession (lib/models/session.dart)
+
+============================================================
+SEGMENTS À SURVEILLER / CORRECTIONS FUTURES
+============================================================
+1. session_active_page.dart (~490 lignes): vérifier cohérence détection exercices durée après refactor
+2. session_hive.dart: try/catch sur charger() et chargerToutes() — vérifier que debugPrint importé
+3. models/session.dart: null-safety sur tous les fromJson() — defaults entiers=0, listes=[]
+4. Salle page (salle_page.dart): for-comprehension corrigé, vérifier qu'aucun yield n'a été rajouté
+5. Migration material_ui (Lot 6): éliminera les 8 deprecated_member_use — prioritaire après Phase 4
+
+============================================================
+FIN DU RÉSUMÉ
+============================================================

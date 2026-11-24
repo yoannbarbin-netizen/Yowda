@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:model_viewer_plus/model_viewer_plus.dart';
 import 'fiches.dart';
+import 'pages/session_active_page.dart';
 
 const Map<String, String> modeles3d = {
   'Tirage vertical': 'assets/models/lat_pulldown.glb',
@@ -318,14 +319,22 @@ class EquipementPage extends StatelessWidget {
           Text('Exercices possibles',
               style: Theme.of(context).textTheme.titleMedium),
           const SizedBox(height: 8),
-                    for (var i = 0; i < equipement.exercices.length; i++)
+          for (var i = 0; i < equipement.exercices.length; i++)
             Card(
               child: ListTile(
                 leading: CircleAvatar(child: Text('${i + 1}')),
                 title: Text(equipement.exercices[i]),
-                trailing: fiches.containsKey(equipement.exercices[i])
-                    ? const Icon(Icons.chevron_right)
-                    : null,
+                trailing: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    IconButton(
+                      icon: const Icon(Icons.fitness_center, color: Colors.deepOrange),
+                      tooltip: 'Ajouter à l\'entraînement actif',
+                      onPressed: () => SessionActivePage.ajouterEtOuvrir(context, equipement.exercices[i]),
+                    ),
+                    if (fiches.containsKey(equipement.exercices[i])) const Icon(Icons.chevron_right),
+                  ],
+                ),
                 onTap: fiches.containsKey(equipement.exercices[i])
                     ? () => Navigator.push(
                           context,

@@ -1,5 +1,6 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'gifs_exercices.dart';
+import 'pages/session_active_page.dart';
 
 class FicheExercice {
   final String niveau;
@@ -37,7 +38,16 @@ class FichePage extends StatelessWidget {
   Widget build(BuildContext context) {
     final couleurs = Theme.of(context).colorScheme;
     return Scaffold(
-      appBar: AppBar(title: Text(nom)),
+      appBar: AppBar(
+        title: Text(nom),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.fitness_center, color: Colors.deepOrange),
+            tooltip: 'Ajouter à l\'entraînement actif',
+            onPressed: () => SessionActivePage.ajouterEtOuvrir(context, nom),
+          ),
+        ],
+      ),
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [

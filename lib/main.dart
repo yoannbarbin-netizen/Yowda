@@ -1,11 +1,18 @@
 import 'package:flutter/material.dart';
+import 'package:hive_flutter/hive_flutter.dart';
+import 'data/session_hive.dart';
 import 'pages/echauffement_page.dart';
 import 'pages/etirements_page.dart';
 import 'pages/materiel_maison_page.dart';
 import 'pages/sans_materiel_page.dart';
+import 'pages/session_active_page.dart';
 import 'salle_page.dart';
 
-void main() => runApp(const AppliMuscu());
+Future<void> main() async {
+  await Hive.initFlutter();
+  await sessionStorage.init();
+  runApp(const AppliMuscu());
+}
 
 class AppliMuscu extends StatelessWidget {
   const AppliMuscu({super.key});
@@ -57,6 +64,18 @@ class HomePage extends StatelessWidget {
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
+          // Bouton Entraînement actif
+          Padding(
+            padding: const EdgeInsets.only(bottom: 12),
+            child: OutlinedButton.icon(
+              icon: const Icon(Icons.fitness_center, size: 28),
+              label: const Text('Entraînement actif', style: TextStyle(fontSize: 18)),
+              onPressed: () => Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const SessionActivePage()),
+              ),
+            ),
+          ),
           for (final s in sections)
             Padding(
               padding: const EdgeInsets.only(bottom: 12),

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../data/materiel_maison.dart';
+import 'session_active_page.dart';
 
 class MaterielMaisonPage extends StatefulWidget {
   const MaterielMaisonPage({super.key});
@@ -85,7 +86,16 @@ class _MaterielMaisonPageState extends State<MaterielMaisonPage> {
         for (final e in possibles)
           Card(
             child: ExpansionTile(
-              title: Text(e.nom),
+              title: Row(
+                children: [
+                  Expanded(child: Text(e.nom)),
+                  IconButton(
+                    icon: const Icon(Icons.fitness_center, color: Colors.deepOrange),
+                    tooltip: 'Ajouter à l\'entraînement actif',
+                    onPressed: () => SessionActivePage.ajouterEtOuvrir(context, e.nom),
+                  ),
+                ],
+              ),
               subtitle: Text(e.muscles),
               childrenPadding: const EdgeInsets.all(16),
               expandedCrossAxisAlignment: CrossAxisAlignment.start,

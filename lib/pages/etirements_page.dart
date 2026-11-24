@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../data/etirements.dart';
 import 'echauffement_page.dart';
+import 'session_active_page.dart';
 
 class EtirementsPage extends StatelessWidget {
   const EtirementsPage({super.key});
@@ -21,7 +22,17 @@ class EtirementsPage extends StatelessWidget {
               child: ListTile(
                 title: Text(e.nom),
                 subtitle: Text('${e.zone} · ${e.duree}'),
-                trailing: const Icon(Icons.chevron_right),
+                trailing: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    IconButton(
+                      icon: const Icon(Icons.fitness_center, color: Colors.deepOrange),
+                      tooltip: 'Ajouter à l\'entraînement actif',
+                      onPressed: () => SessionActivePage.ajouterEtOuvrir(context, e.nom),
+                    ),
+                    const Icon(Icons.chevron_right),
+                  ],
+                ),
                 onTap: () => Navigator.push(
                   context,
                   MaterialPageRoute(

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../data/echauffement.dart';
+import 'session_active_page.dart';
 
 class EchauffementPage extends StatelessWidget {
   const EchauffementPage({super.key});
@@ -20,7 +21,17 @@ class EchauffementPage extends StatelessWidget {
               child: ListTile(
                 title: Text(e.nom),
                 subtitle: Text('${e.zone} · ${e.duree}'),
-                trailing: const Icon(Icons.chevron_right),
+                trailing: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    IconButton(
+                      icon: const Icon(Icons.fitness_center, color: Colors.deepOrange),
+                      tooltip: 'Ajouter à l\'entraînement actif',
+                      onPressed: () => SessionActivePage.ajouterEtOuvrir(context, e.nom),
+                    ),
+                    const Icon(Icons.chevron_right),
+                  ],
+                ),
                 onTap: () => Navigator.push(
                   context,
                   MaterialPageRoute(
@@ -43,7 +54,16 @@ class ExerciceDetailPage extends StatelessWidget {
   Widget build(BuildContext context) {
     final titre = Theme.of(context).textTheme.titleMedium;
     return Scaffold(
-      appBar: AppBar(title: Text(exercice.nom)),
+      appBar: AppBar(
+        title: Text(exercice.nom),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.fitness_center, color: Colors.deepOrange),
+            tooltip: 'Ajouter à l\'entraînement actif',
+            onPressed: () => SessionActivePage.ajouterEtOuvrir(context, exercice.nom),
+          ),
+        ],
+      ),
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
