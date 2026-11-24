@@ -128,6 +128,8 @@ class _SessionActivePageState extends State<SessionActivePage> {
   @override
   void initState() {
     super.initState();
+    // Initialisation immédiate : évite toute lecture de _session avant le chargement Hive.
+    _session = WorkoutSession.vierge();
     // On récupère une session existante ou on en crée une neuve
     if (sessionStorage.isReady) {
       sessionStorage.chargerToutes().then((sessions) {
@@ -155,8 +157,10 @@ class _SessionActivePageState extends State<SessionActivePage> {
       _session = WorkoutSession.vierge();
       Future.microtask(() => setState(() {}));
     }
-    // Timer temps réel — démarré manuellement via le bouton "Démarrer le chrono"
-    _timer = null;
+    // Chrono temps réel : met à jour l'affichage de la durée chaque seconde.
+    _timer = Timer.periodic(const Duration(seconds: 1), (_) {
+      if (mounted) setState(() {});
+    });
   }
 
 
