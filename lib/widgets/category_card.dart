@@ -52,6 +52,8 @@ class CategoryCard extends StatelessWidget {
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis),
                     Text(subtitle,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
                         style: t.textTheme.bodyMedium
                             ?.copyWith(color: s.onSurfaceVariant)),
                   ],
