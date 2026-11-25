@@ -18,7 +18,10 @@ class SessionActivePage extends StatefulWidget {
   /// d'ajout de set pour cet exercice dès que la session est prête.
   final String? preselectionNom;
 
-  const SessionActivePage({super.key, this.preselectionNom});
+  /// Indique si l'exercice pré-sélectionné dure (true) ou force (false).
+  final bool preselectionEstDuree;
+
+  const SessionActivePage({super.key, this.preselectionNom, this.preselectionEstDuree = false});
 
   static bool isDureeExercice(String nom) => _SessionActivePageState._dureeExercices.contains(nom);
 
@@ -145,7 +148,7 @@ class _SessionActivePageState extends State<SessionActivePage> {
           // Auto-ouverture du dialogue d'ajout de set pour l'exercice pré-sélectionné
           final nom = widget.preselectionNom;
           if (nom != null && _session.fin == null) {
-            WidgetsBinding.instance.addPostFrameCallback((_) => _ajouterSet(nom));
+            WidgetsBinding.instance.addPostFrameCallback((_) => _ajouterSet(nom, estDureeForce: widget.preselectionEstDuree));
           }
         } catch (e) {
           debugPrint('session_active: erreur chargement session — $e');
@@ -172,9 +175,10 @@ class _SessionActivePageState extends State<SessionActivePage> {
 
   // ── Ajout d'un set à un exercice existant ou création ──
 
-  Future<void> _ajouterSet(String nomExercise) async {
-    // Exercices à durée : on demande une durée en secondes au lieu de poids/répétitions
-    final estDuree = _dureeExercices.contains(nomExercise);
+  Future<void> _ajouterSet(String nomExercise, {bool? estDureeForce}) async {
+    // Exercices à durée : on demande une durée en secondes au lieu de poids/répétitions.
+    // estDureeForce (si fourni) prime sur la déduction par nom.
+    final estDuree = estDureeForce ?? _dureeExercices.contains(nomExercise);
 
     if (estDuree) {
       await _ajouterSetDuree(nomExercise);
@@ -253,67 +257,72 @@ class _SessionActivePageState extends State<SessionActivePage> {
 
     await showDialog<void>(
       context: context,
-      builder: (ctx) => AlertDialog(
-        title: Text('Ajouter un set — $nomExercise'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text('Durée (secondes)'),
-            const SizedBox(height: 4),
-            DropdownButton<int>(
-              value: dureeSelectionnee == 0 ? null : dureeSelectionnee,
-              isExpanded: true,
-              hint: const Text('--'),
-              items: List.generate(300, (i) => i + 1)
-                  .map((v) => DropdownMenuItem(value: v, child: Text('$v s')))
-                  .toList(),
-              onChanged: (v) => dureeSelectionnee = v ?? 0,
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, setDialogState) => AlertDialog(
+          title: Text('Ajouter un set — $nomExercise'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text('Durée (secondes)'),
+              const SizedBox(height: 4),
+              DropdownButton<int>(
+                value: dureeSelectionnee == 0 ? null : dureeSelectionnee,
+                isExpanded: true,
+                hint: const Text('--'),
+                items: List.generate(300, (i) => i + 1)
+                    .map((v) => DropdownMenuItem(value: v, child: Text('$v s')))
+                    .toList(),
+                onChanged: (v) {
+                  dureeSelectionnee = v ?? 0;
+                  setDialogState(() {});
+                },
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(ctx),
+              child: const Text('Annuler'),
+            ),
+            FilledButton(
+              onPressed: () {
+                final dureeSec = dureeSelectionnee;
+
+                // Trouve l'exercice ou en crée un nouveau
+                final existing = _session.exercices.indexWhere((e) => e.nom == nomExercise);
+                if (existing != -1) {
+                  final set = PerformedSet(
+                    numero: _session.exercices[existing].series.length + 1,
+                    poidsKg: 0.0,
+                    reps: 0,
+                    duree: Duration(seconds: dureeSec),
+                  );
+                  _session.exercices[existing] = PerformedExercise(
+                    nom: nomExercise,
+                    series: List.from(_session.exercices[existing].series)..add(set),
+                    fait: _session.exercices[existing].fait,
+                  );
+                } else {
+                  final set = PerformedSet(
+                    numero: 1,
+                    poidsKg: 0.0,
+                    reps: 0,
+                    duree: Duration(seconds: dureeSec),
+                  );
+                  _session.exercices.add(PerformedExercise(nom: nomExercise, series: [set]));
+                }
+
+                // Sauvegarde Hive
+                sessionStorage.sauvegarder(_session);
+
+                if (mounted) setState(() {});
+                Navigator.pop(ctx);
+              },
+              child: const Text('Valider'),
             ),
           ],
         ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx),
-            child: const Text('Annuler'),
-          ),
-          FilledButton(
-            onPressed: () {
-              final dureeSec = dureeSelectionnee;
-
-              // Trouve l'exercice ou en crée un nouveau
-              final existing = _session.exercices.indexWhere((e) => e.nom == nomExercise);
-              if (existing != -1) {
-                final set = PerformedSet(
-                  numero: _session.exercices[existing].series.length + 1,
-                  poidsKg: 0.0,
-                  reps: 0,
-                  duree: Duration(seconds: dureeSec),
-                );
-                _session.exercices[existing] = PerformedExercise(
-                  nom: nomExercise,
-                  series: List.from(_session.exercices[existing].series)..add(set),
-                  fait: _session.exercices[existing].fait,
-                );
-              } else {
-                final set = PerformedSet(
-                  numero: 1,
-                  poidsKg: 0.0,
-                  reps: 0,
-                  duree: Duration(seconds: dureeSec),
-                );
-                _session.exercices.add(PerformedExercise(nom: nomExercise, series: [set]));
-              }
-
-              // Sauvegarde Hive
-              sessionStorage.sauvegarder(_session);
-
-              if (mounted) setState(() {});
-              Navigator.pop(ctx);
-            },
-            child: const Text('Valider'),
-          ),
-        ],
       ),
     );
   }
@@ -581,6 +590,7 @@ class _SessionActivePageState extends State<SessionActivePage> {
                       children: [
                         Column(children: [Text('${_session.exercices.length}', style: Theme.of(context).textTheme.headlineSmall), Text('exercices', style: Theme.of(context).textTheme.bodySmall)],),
                         Column(children: [Text('${_session.totalSeries}', style: Theme.of(context).textTheme.headlineSmall), Text('séries', style: Theme.of(context).textTheme.bodySmall)],),
+                        Column(children: [Text('${_session.exercices.where((e) => e.fait).length}/${_session.exercices.length}', style: Theme.of(context).textTheme.headlineSmall), Text('barrés', style: Theme.of(context).textTheme.bodySmall)],),
                       ],
                     ),
                   ),
@@ -702,6 +712,7 @@ class SessionBilanPage extends StatelessWidget {
                 _row('Durée', _formatDuration(session.dureeTotale())),
                 _row('Exercices', '${session.exercices.length}'),
                 _row('Séries totales', '${session.totalSeries}'),
+                _row('Exercices barrés', '${session.exercices.where((e) => e.fait).length} / ${session.exercices.length}'),
                 if (session.poidsTotalMax > 0)
                   _row('Poids max soulevé', '${session.poidsTotalMax.toStringAsFixed(1)} kg'),
               ]),
@@ -715,7 +726,14 @@ class SessionBilanPage extends StatelessWidget {
           for (final ex in session.exercices)
             Card(
               child: ExpansionTile(
-                title: Text(ex.nom, style: const TextStyle(fontWeight: FontWeight.bold)),
+                title: Text(
+                  ex.nom,
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    decoration: ex.fait ? TextDecoration.lineThrough : TextDecoration.none,
+                    color: ex.fait ? couleurs.outline : null,
+                  ),
+                ),
                 subtitle: SessionActivePage.isDureeExercice(ex.nom)
                     ? Text('${ex.totalSeries} série(s) · Durée max : ${_dureeMaxEx(ex)}s')
                     : Text('${ex.totalSeries} série(s) · Max ${ex.poidsMax.toStringAsFixed(1)} kg'),
