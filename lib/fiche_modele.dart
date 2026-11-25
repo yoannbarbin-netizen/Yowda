@@ -44,7 +44,7 @@ class FichePage extends StatelessWidget {
           IconButton(
             icon: const Icon(Icons.fitness_center, color: Colors.deepOrange),
             tooltip: 'Ajouter à l\'entraînement actif',
-            onPressed: () => SessionActivePage.ajouterEtOuvrir(context, nom),
+            onPressed: () => SessionActivePage.ajouterEtOuvrir(context, nom, estDuree: false),
           ),
         ],
       ),

@@ -18,19 +18,21 @@ class SessionActivePage extends StatefulWidget {
   /// d'ajout de set pour cet exercice dès que la session est prête.
   final String? preselectionNom;
 
-  /// Indique si l'exercice pré-sélectionné dure (true) ou force (false).
-  final bool preselectionEstDuree;
+  /// Type de saisie imposé pour l'exercice pré-sélectionné :
+  /// true = durée (secondes), false = poids/reps, null = déduire du nom.
+  final bool? preselectionEstDuree;
 
-  const SessionActivePage({super.key, this.preselectionNom, this.preselectionEstDuree = false});
+  const SessionActivePage({super.key, this.preselectionNom, this.preselectionEstDuree});
 
   static bool isDureeExercice(String nom) => _SessionActivePageState._dureeExercices.contains(nom);
 
   /// Navigation vers la session active et ouverture du dialogue pour [nomExercise].
-  static Future<void> ajouterEtOuvrir(BuildContext context, String nomExercise) async {
+  /// [estDuree] : true = durée, false = poids/reps, null = déduire du nom.
+  static Future<void> ajouterEtOuvrir(BuildContext context, String nomExercise, {bool? estDuree}) async {
     await Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (_) => SessionActivePage(preselectionNom: nomExercise),
+        builder: (_) => SessionActivePage(preselectionNom: nomExercise, preselectionEstDuree: estDuree),
       ),
     );
   }
@@ -302,6 +304,7 @@ class _SessionActivePageState extends State<SessionActivePage> {
                     nom: nomExercise,
                     series: List.from(_session.exercices[existing].series)..add(set),
                     fait: _session.exercices[existing].fait,
+                    estDuree: _session.exercices[existing].estDuree,
                   );
                 } else {
                   final set = PerformedSet(
@@ -310,7 +313,7 @@ class _SessionActivePageState extends State<SessionActivePage> {
                     reps: 0,
                     duree: Duration(seconds: dureeSec),
                   );
-                  _session.exercices.add(PerformedExercise(nom: nomExercise, series: [set]));
+                  _session.exercices.add(PerformedExercise(nom: nomExercise, series: [set], estDuree: true));
                 }
 
                 // Sauvegarde Hive
@@ -340,6 +343,7 @@ class _SessionActivePageState extends State<SessionActivePage> {
         nom: nomExercise,
         series: List.from(_session.exercices[existing].series)..add(set),
         fait: _session.exercices[existing].fait,
+        estDuree: _session.exercices[existing].estDuree,
       );
     } else {
       final set = PerformedSet(
@@ -348,7 +352,7 @@ class _SessionActivePageState extends State<SessionActivePage> {
         reps: reps,
         duree: Duration.zero,
       );
-      _session.exercices.add(PerformedExercise(nom: nomExercise, series: [set]));
+      _session.exercices.add(PerformedExercise(nom: nomExercise, series: [set], estDuree: false));
     }
 
     // Sauvegarde Hive
@@ -371,6 +375,7 @@ class _SessionActivePageState extends State<SessionActivePage> {
       nom: ex.nom,
       series: nouvellesSeries,
       fait: ex.fait,
+      estDuree: ex.estDuree,
     );
     sessionStorage.sauvegarder(_session);
     if (mounted) setState(() {});
@@ -383,6 +388,7 @@ class _SessionActivePageState extends State<SessionActivePage> {
       nom: ex.nom,
       series: ex.series,
       fait: !ex.fait,
+      estDuree: ex.estDuree,
     );
     sessionStorage.sauvegarder(_session);
     if (mounted) setState(() {});
@@ -441,7 +447,7 @@ class _SessionActivePageState extends State<SessionActivePage> {
                                     title: Text(ex),
                                     onTap: () {
                                       Navigator.pop(ctx);
-                                      WidgetsBinding.instance.addPostFrameCallback((_) => _ajouterSet(ex));
+                                      WidgetsBinding.instance.addPostFrameCallback((_) => _ajouterSet(ex, estDureeForce: false));
                                     },
                                   ),
                               ],
@@ -462,7 +468,7 @@ class _SessionActivePageState extends State<SessionActivePage> {
 
   static bool isDureeExercice(String nom) => _dureeExercices.contains(nom);
 
-  bool _isExDuree(int index) => isDureeExercice(_session.exercices[index].nom);
+  bool _isExDuree(int index) => _session.exercices[index].estDuree ?? isDureeExercice(_session.exercices[index].nom);
 
   int _dureeMax(int index) {
     final series = _session.exercices[index].series;
@@ -652,7 +658,7 @@ class _SessionActivePageState extends State<SessionActivePage> {
                           child: OutlinedButton.icon(
                             icon: const Icon(Icons.add_circle_outline, size: 20),
                             label: const Text('Ajouter un set'),
-                            onPressed: () => _ajouterSet(_session.exercices[i].nom),
+                            onPressed: () => _ajouterSet(_session.exercices[i].nom, estDureeForce: _session.exercices[i].estDuree),
                           ),
                         ),
                       ],
@@ -734,17 +740,17 @@ class SessionBilanPage extends StatelessWidget {
                     color: ex.fait ? couleurs.outline : null,
                   ),
                 ),
-                subtitle: SessionActivePage.isDureeExercice(ex.nom)
+                subtitle: (ex.estDuree ?? SessionActivePage.isDureeExercice(ex.nom))
                     ? Text('${ex.totalSeries} série(s) · Durée max : ${_dureeMaxEx(ex)}s')
                     : Text('${ex.totalSeries} série(s) · Max ${ex.poidsMax.toStringAsFixed(1)} kg'),
                 children: [
                   for (int i = 0; i < ex.series.length; i++)
                     ListTile(
                       leading: CircleAvatar(child: Text('${ex.series[i].numero}')),
-                      title: SessionActivePage.isDureeExercice(ex.nom)
+                      title: (ex.estDuree ?? SessionActivePage.isDureeExercice(ex.nom))
                           ? Text('Durée : ${ex.series[i].duree.inSeconds}s')
                           : Text('${ex.series[i].poidsKg.toStringAsFixed(1)} kg'),
-                      trailing: SessionActivePage.isDureeExercice(ex.nom) ? null : Text('${ex.series[i].reps} reps'),
+                      trailing: (ex.estDuree ?? SessionActivePage.isDureeExercice(ex.nom)) ? null : Text('${ex.series[i].reps} reps'),
                     ),
                 ],
               ),

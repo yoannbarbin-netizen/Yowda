@@ -330,7 +330,7 @@ class EquipementPage extends StatelessWidget {
                     IconButton(
                       icon: const Icon(Icons.fitness_center, color: Colors.deepOrange),
                       tooltip: 'Ajouter à l\'entraînement actif',
-                      onPressed: () => SessionActivePage.ajouterEtOuvrir(context, equipement.exercices[i]),
+                      onPressed: () => SessionActivePage.ajouterEtOuvrir(context, equipement.exercices[i], estDuree: false),
                     ),
                     if (fiches.containsKey(equipement.exercices[i])) const Icon(Icons.chevron_right),
                   ],

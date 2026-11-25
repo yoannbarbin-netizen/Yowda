@@ -33,8 +33,9 @@ class PerformedExercise {
   String nom; // clé identique au nom exercice de salle_page.dart
   List<PerformedSet> series;
   bool fait; // true quand l'utilisateur a barré l'exercice (fait)
+  bool? estDuree; // true = durée (secondes), false = poids/reps ; null = déduire du nom (anciennes séances)
 
-  PerformedExercise({required this.nom, List<PerformedSet>? series, this.fait = false})
+  PerformedExercise({required this.nom, List<PerformedSet>? series, this.fait = false, this.estDuree})
     : series = series ?? [];
 
   int get totalSeries => series.length;
@@ -45,6 +46,7 @@ class PerformedExercise {
         'nom': nom,
         'series': series.map((s) => s.toJson()).toList(),
         'fait': fait,
+        'est_duree': estDuree,
       };
 
   static PerformedExercise fromJson(Map<dynamic, dynamic> json) => PerformedExercise(
@@ -53,6 +55,7 @@ class PerformedExercise {
             ?.map((s) => PerformedSet.fromJson(s as Map<dynamic, dynamic>))
             .toList() ?? [],
         fait: json['fait'] as bool? ?? false,
+        estDuree: json['est_duree'] as bool?,
       );
 }
 
