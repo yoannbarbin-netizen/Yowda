@@ -71,7 +71,7 @@ class _SessionActivePageState extends State<SessionActivePage> {
     "Fentes alternées",
     "Montées de genoux",
     "Jumping jacks",
-    // Étirements (15)
+    // Étirements (15) — avec Étirement du cou à la fin
     "Étirement des mollets",
     "Étirement des quadriceps",
     "Étirement des fléchisseurs de hanche",
@@ -293,6 +293,7 @@ class _SessionActivePageState extends State<SessionActivePage> {
                 _session.exercices[existing] = PerformedExercise(
                   nom: nomExercise,
                   series: List.from(_session.exercices[existing].series)..add(set),
+                  fait: _session.exercices[existing].fait,
                 );
               } else {
                 final set = PerformedSet(
@@ -329,6 +330,7 @@ class _SessionActivePageState extends State<SessionActivePage> {
       _session.exercices[existing] = PerformedExercise(
         nom: nomExercise,
         series: List.from(_session.exercices[existing].series)..add(set),
+        fait: _session.exercices[existing].fait,
       );
     } else {
       final set = PerformedSet(
@@ -356,7 +358,23 @@ class _SessionActivePageState extends State<SessionActivePage> {
         duree: nouvellesSeries[i].duree,
       );
     }
-    _session.exercices[exerciseIndex] = PerformedExercise(nom: ex.nom, series: nouvellesSeries);
+    _session.exercices[exerciseIndex] = PerformedExercise(
+      nom: ex.nom,
+      series: nouvellesSeries,
+      fait: ex.fait,
+    );
+    sessionStorage.sauvegarder(_session);
+    if (mounted) setState(() {});
+  }
+
+  /// Bascule l'état « barré » (fait) d'un exercice et sauvegarde la séance.
+  void _basculerFait(int index) {
+    final ex = _session.exercices[index];
+    _session.exercices[index] = PerformedExercise(
+      nom: ex.nom,
+      series: ex.series,
+      fait: !ex.fait,
+    );
     sessionStorage.sauvegarder(_session);
     if (mounted) setState(() {});
   }
@@ -573,7 +591,30 @@ class _SessionActivePageState extends State<SessionActivePage> {
                 for (int i = 0; i < _session.exercices.length; i++)
                   Card(
                     child: ExpansionTile(
-                      title: Text(_session.exercices[i].nom, style: const TextStyle(fontWeight: FontWeight.bold)),
+                      leading: IconButton(
+                        icon: Icon(
+                          _session.exercices[i].fait
+                              ? Icons.check_circle
+                              : Icons.check_circle_outline,
+                          color: _session.exercices[i].fait
+                              ? Colors.green
+                              : couleurs.outline,
+                        ),
+                        tooltip: _session.exercices[i].fait
+                            ? 'Marquer comme à faire'
+                            : 'Marquer comme fait',
+                        onPressed: () => _basculerFait(i),
+                      ),
+                      title: Text(
+                        _session.exercices[i].nom,
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          decoration: _session.exercices[i].fait
+                              ? TextDecoration.lineThrough
+                              : TextDecoration.none,
+                          color: _session.exercices[i].fait ? couleurs.outline : null,
+                        ),
+                      ),
                       subtitle: _isExDuree(i)
                           ? Text('${_session.exercices[i].totalSeries} série(s) · Durée max : ${_dureeMax(i)}s')
                           : Text('${_session.exercices[i].totalSeries} série(s) · Max ${_session.exercices[i].poidsMax.toStringAsFixed(1)} kg'),

@@ -16,7 +16,7 @@ Dernière mise à jour : 24/11/2026
 ## Décisions
 - Fractionné et Course continue partagent course_continue.gif (volontaire).
 - Allègement des GLB lourds (leg_extension 22,6 Mo, lat_pulldown 11,5 Mo) reporté à une grosse sortie de version.
-- flutter analyze : 8 infos deprecated_member_use attendues (7 fichiers existants + pages/session_active_page.dart), une par fichier qui importe package:flutter/material.dart (elles disparaissent avec la migration vers material_ui). Ce nombre change si un lot ajoute ou retire un fichier important material.dart : le prompt du lot donne alors la valeur attendue.
+- flutter analyze : 7 infos deprecated_member_use attendues (une par fichier qui importe package:flutter/material.dart), une par fichier. Ce nombre change si un lot ajoute ou retire un fichier important material.dart : le prompt du lot donne alors la valeur attendue.
 - Les clés des fiches doivent rester identiques au caractère près aux noms d'exercices de salle_page.dart.
 
 ## Structure actuelle de lib/ (avant refactor)
