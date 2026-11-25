@@ -54,6 +54,11 @@ class SessionStorage {
     await _box.delete(key);
   }
 
+  /// Supprime une session par son objet (même clé que sauvegarder).
+  Future<void> supprimerSession(WorkoutSession session) async {
+    await _box.delete(_cle(session));
+  }
+
   /// Vérifie si Hive est initialisé.
   bool get isReady => _box.isOpen;
 }
