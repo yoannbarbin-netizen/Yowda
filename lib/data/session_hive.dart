@@ -19,9 +19,12 @@ class SessionStorage {
   static String _dateKey(DateTime dt) =>
       '${dt.year}${dt.month.toString().padLeft(2, '0')}${dt.day.toString().padLeft(2, '0')}_${dt.hour.toString().padLeft(2, '0')}${dt.minute.toString().padLeft(2, '0')}';
 
-  /// Sauvegarde (ou met à jour) une session.
+  /// Sauvegarde (ou met à jour) une session, puis force l'écriture sur disque.
+  /// Le flush est indispensable sur Android : sans lui, les données peuvent être
+  /// perdues si l'application est fermée juste après la sauvegarde.
   Future<void> sauvegarder(WorkoutSession session) async {
     await _box.put(_cle(session), session.toJson());
+    await _box.flush();
   }
 
   /// Charge toutes les sessions existantes.

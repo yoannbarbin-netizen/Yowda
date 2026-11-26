@@ -80,13 +80,15 @@ class _AccueilPageState extends State<AccueilPage> {
                 const SizedBox(height: Sp.xl),
                 Text('Catégories', style: t.textTheme.titleLarge),
                 const SizedBox(height: Sp.md),
-                GridView.count(
-                  crossAxisCount: 2,
-                  mainAxisSpacing: Sp.md,
-                  crossAxisSpacing: Sp.md,
-                  childAspectRatio: 2.3,
+                GridView(
                   shrinkWrap: true,
                   physics: const NeverScrollableScrollPhysics(),
+                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                    crossAxisCount: 2,
+                    mainAxisSpacing: Sp.md,
+                    crossAxisSpacing: Sp.md,
+                    mainAxisExtent: 84,
+                  ),
                   children: [
                     CategoryCard(
                         icon: Icons.local_fire_department_rounded,

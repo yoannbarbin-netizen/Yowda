@@ -5,6 +5,12 @@ import 'package:flutter/material.dart';
 import '../data/session_hive.dart';
 import '../models/session.dart';
 import '../salle_page.dart';
+import '../theme/app_theme.dart';
+import '../widgets/finish_workout_button.dart';
+import '../widgets/set_row.dart';
+
+/// Formate une distance en km : 5.0 → « 5 », 5.5 → « 5.5 ».
+String formatKm(double v) => v % 1 == 0 ? '${v.toInt()}' : '$v';
 
 /// Callback déclenché quand l'utilisateur appuie sur "Ajouter à l'entraînement actif".
 typedef OnAjouterExercice = void Function(String nomExercise);
@@ -25,6 +31,12 @@ class SessionActivePage extends StatefulWidget {
   const SessionActivePage({super.key, this.preselectionNom, this.preselectionEstDuree});
 
   static bool isDureeExercice(String nom) => _SessionActivePageState._dureeExercices.contains(nom);
+
+  /// Exercice de la catégorie Cardio (salle) : temps (minutes) + distance (km).
+  static bool isCardioExercice(String nom) => _SessionActivePageState._cardioExercices.contains(nom);
+
+  /// Exercice de la catégorie Accessoires (salle) : temps (secondes) + répétitions.
+  static bool isAccessoiresExercice(String nom) => _SessionActivePageState._accessoiresExercices.contains(nom);
 
   /// Navigation vers la session active et ouverture du dialogue pour [nomExercise].
   /// [estDuree] : true = durée, false = poids/reps, null = déduire du nom.
@@ -54,7 +66,7 @@ class SessionActivePage extends StatefulWidget {
   State<SessionActivePage> createState() => _SessionActivePageState();
 }
 
-class _SessionActivePageState extends State<SessionActivePage> {
+class _SessionActivePageState extends State<SessionActivePage> with WidgetsBindingObserver {
   late WorkoutSession _session;
   Timer? _timer;
 
@@ -130,11 +142,45 @@ class _SessionActivePageState extends State<SessionActivePage> {
     "Relevés de jambes allongé",
   };
 
+  // Exercices de la catégorie Cardio (salle) : on demande un temps (minutes)
+  // et une distance (km) au lieu de poids/répétitions.
+  static const Set<String> _cardioExercices = {
+    "Marche inclinée",
+    "Course continue",
+    "Fractionné (30 s / 30 s)",
+    "Pédalage régulier",
+    "Intervalles de résistance",
+    "Rame continue 10 à 20 min",
+    "Intervalles 500 m",
+    "Séance continue",
+    "Pédalage inversé",
+    "Montée continue",
+    "Montée par intervalles",
+  };
+
+  // Exercices de la catégorie Accessoires (salle) : on demande un temps
+  // (secondes) et des répétitions au lieu de poids/répétitions.
+  static const Set<String> _accessoiresExercices = {
+    "Rotations d'épaules",
+    "Tirage élastique",
+    "Marche latérale (fessiers)",
+    "Saut simple",
+    "Double saut",
+    "Alternance de pieds",
+    "Planche sur ballon",
+    "Crunch sur ballon",
+    "Hip thrust, pieds sur ballon",
+    "Cuisses",
+    "Dos (haut)",
+    "Mollets",
+  };
+
   @override
   void initState() {
     super.initState();
     // Initialisation immédiate : évite toute lecture de _session avant le chargement Hive.
     _session = WorkoutSession.vierge();
+    WidgetsBinding.instance.addObserver(this);
     // On récupère une session existante ou on en crée une neuve
     if (sessionStorage.isReady) {
       sessionStorage.chargerToutes().then((sessions) {
@@ -171,13 +217,39 @@ class _SessionActivePageState extends State<SessionActivePage> {
 
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
     _timer?.cancel();
     super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    // Fiabilité Android : on réécrit la séance sur disque quand l'application
+    // passe en arrière-plan (les écritures en attente peuvent être perdues si
+    // le système ferme l'application).
+    if ((state == AppLifecycleState.paused || state == AppLifecycleState.inactive) &&
+        _session.fin == null &&
+        _session.exercices.isNotEmpty &&
+        sessionStorage.isReady) {
+      sessionStorage.sauvegarder(_session);
+    }
   }
 
   // ── Ajout d'un set à un exercice existant ou création ──
 
   Future<void> _ajouterSet(String nomExercise, {bool? estDureeForce}) async {
+    // Cardio (salle) : temps (minutes) + distance (km).
+    if (_cardioExercices.contains(nomExercise)) {
+      await _ajouterSetCardio(nomExercise);
+      return;
+    }
+
+    // Accessoires (salle) : temps (secondes) + répétitions.
+    if (_accessoiresExercices.contains(nomExercise)) {
+      await _ajouterSetAccessoires(nomExercise);
+      return;
+    }
+
     // Exercices à durée : on demande une durée en secondes au lieu de poids/répétitions.
     // estDureeForce (si fourni) prime sur la déduction par nom.
     final estDuree = estDureeForce ?? _dureeExercices.contains(nomExercise);
@@ -330,6 +402,196 @@ class _SessionActivePageState extends State<SessionActivePage> {
     );
   }
 
+  // ── Cardio : temps (minutes) + distance (km) ──
+
+  Future<void> _ajouterSetCardio(String nomExercise) async {
+    int minutesSelectionnees = 0; // 0 = non sélectionné
+    double kmSelectionnes = 0; // 0 = non sélectionné
+
+    await showDialog<void>(
+      context: context,
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, setDialogState) => AlertDialog(
+          title: Text('Ajouter un set — $nomExercise'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text('Temps (minutes)'),
+              const SizedBox(height: 4),
+              DropdownButton<int>(
+                value: minutesSelectionnees == 0 ? null : minutesSelectionnees,
+                isExpanded: true,
+                hint: const Text('--'),
+                items: List.generate(180, (i) => i + 1)
+                    .map((v) => DropdownMenuItem(value: v, child: Text('$v min')))
+                    .toList(),
+                onChanged: (v) {
+                  minutesSelectionnees = v ?? 0;
+                  setDialogState(() {});
+                },
+              ),
+              const SizedBox(height: 12),
+              const Text('Distance (km)'),
+              const SizedBox(height: 4),
+              DropdownButton<double>(
+                value: kmSelectionnes == 0 ? null : kmSelectionnes,
+                isExpanded: true,
+                hint: const Text('--'),
+                items: List.generate(100, (i) => (i + 1) * 0.5)
+                    .map((v) => DropdownMenuItem(value: v, child: Text('${formatKm(v)} km')))
+                    .toList(),
+                onChanged: (v) {
+                  kmSelectionnes = v ?? 0;
+                  setDialogState(() {});
+                },
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(ctx),
+              child: const Text('Annuler'),
+            ),
+            FilledButton(
+              onPressed: () {
+                _enregistrerSetCardio(nomExercise, minutesSelectionnees, kmSelectionnes);
+                if (mounted) setState(() {});
+                Navigator.pop(ctx);
+              },
+              child: const Text('Valider'),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _enregistrerSetCardio(String nomExercise, int minutes, double km) {
+    final existing = _session.exercices.indexWhere((e) => e.nom == nomExercise);
+    if (existing != -1) {
+      final set = PerformedSet(
+        numero: _session.exercices[existing].series.length + 1,
+        poidsKg: 0.0,
+        reps: 0,
+        duree: Duration(minutes: minutes),
+        distanceKm: km,
+      );
+      _session.exercices[existing] = PerformedExercise(
+        nom: nomExercise,
+        series: List.from(_session.exercices[existing].series)..add(set),
+        fait: _session.exercices[existing].fait,
+        estDuree: _session.exercices[existing].estDuree,
+      );
+    } else {
+      final set = PerformedSet(
+        numero: 1,
+        poidsKg: 0.0,
+        reps: 0,
+        duree: Duration(minutes: minutes),
+        distanceKm: km,
+      );
+      _session.exercices.add(PerformedExercise(nom: nomExercise, series: [set], estDuree: true));
+    }
+
+    // Sauvegarde Hive
+    sessionStorage.sauvegarder(_session);
+  }
+
+  // ── Accessoires : temps (secondes) + répétitions ──
+
+  Future<void> _ajouterSetAccessoires(String nomExercise) async {
+    int secondesSelectionnees = 0; // 0 = non sélectionné
+    int repsSelectionnees = 0; // 0 = non sélectionné
+
+    await showDialog<void>(
+      context: context,
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, setDialogState) => AlertDialog(
+          title: Text('Ajouter un set — $nomExercise'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text('Temps (secondes)'),
+              const SizedBox(height: 4),
+              DropdownButton<int>(
+                value: secondesSelectionnees == 0 ? null : secondesSelectionnees,
+                isExpanded: true,
+                hint: const Text('--'),
+                items: List.generate(300, (i) => i + 1)
+                    .map((v) => DropdownMenuItem(value: v, child: Text('$v s')))
+                    .toList(),
+                onChanged: (v) {
+                  secondesSelectionnees = v ?? 0;
+                  setDialogState(() {});
+                },
+              ),
+              const SizedBox(height: 12),
+              const Text('Répétitions'),
+              const SizedBox(height: 4),
+              DropdownButton<int>(
+                value: repsSelectionnees == 0 ? null : repsSelectionnees,
+                isExpanded: true,
+                hint: const Text('--'),
+                items: List.generate(100, (i) => i + 1)
+                    .map((v) => DropdownMenuItem(value: v, child: Text('$v')))
+                    .toList(),
+                onChanged: (v) {
+                  repsSelectionnees = v ?? 0;
+                  setDialogState(() {});
+                },
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(ctx),
+              child: const Text('Annuler'),
+            ),
+            FilledButton(
+              onPressed: () {
+                _enregistrerSetAccessoires(nomExercise, secondesSelectionnees, repsSelectionnees);
+                if (mounted) setState(() {});
+                Navigator.pop(ctx);
+              },
+              child: const Text('Valider'),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _enregistrerSetAccessoires(String nomExercise, int secondes, int reps) {
+    final existing = _session.exercices.indexWhere((e) => e.nom == nomExercise);
+    if (existing != -1) {
+      final set = PerformedSet(
+        numero: _session.exercices[existing].series.length + 1,
+        poidsKg: 0.0,
+        reps: reps,
+        duree: Duration(seconds: secondes),
+      );
+      _session.exercices[existing] = PerformedExercise(
+        nom: nomExercise,
+        series: List.from(_session.exercices[existing].series)..add(set),
+        fait: _session.exercices[existing].fait,
+        estDuree: _session.exercices[existing].estDuree,
+      );
+    } else {
+      final set = PerformedSet(
+        numero: 1,
+        poidsKg: 0.0,
+        reps: reps,
+        duree: Duration(seconds: secondes),
+      );
+      _session.exercices.add(PerformedExercise(nom: nomExercise, series: [set], estDuree: true));
+    }
+
+    // Sauvegarde Hive
+    sessionStorage.sauvegarder(_session);
+  }
+
   void _enregistrerSetForce(String nomExercise, double poids, int reps) {
     final existing = _session.exercices.indexWhere((e) => e.nom == nomExercise);
     if (existing != -1) {
@@ -369,6 +631,7 @@ class _SessionActivePageState extends State<SessionActivePage> {
         poidsKg: nouvellesSeries[i].poidsKg,
         reps: nouvellesSeries[i].reps,
         duree: nouvellesSeries[i].duree,
+        distanceKm: nouvellesSeries[i].distanceKm,
       );
     }
     _session.exercices[exerciseIndex] = PerformedExercise(
@@ -392,6 +655,314 @@ class _SessionActivePageState extends State<SessionActivePage> {
     );
     sessionStorage.sauvegarder(_session);
     if (mounted) setState(() {});
+  }
+
+  // ── Modification d'une série existante ──
+
+  Future<void> _modifierSet(int exIndex, int setIndex) async {
+    final ex = _session.exercices[exIndex];
+    final set = ex.series[setIndex];
+    if (_isExCardio(exIndex)) {
+      await _modifierSetCardio(
+          exIndex, setIndex, set.duree.inMinutes, set.distanceKm ?? 0);
+    } else if (_isExAccessoires(exIndex)) {
+      await _modifierSetAccessoires(exIndex, setIndex, set.duree.inSeconds, set.reps);
+    } else if (_isExDuree(exIndex)) {
+      await _modifierSetDuree(exIndex, setIndex, set.duree.inSeconds);
+    } else {
+      await _modifierSetForce(exIndex, setIndex, set.poidsKg.round(), set.reps);
+    }
+  }
+
+  void _remplacerSet(int exIndex, int setIndex, PerformedSet nouveau) {
+    final ex = _session.exercices[exIndex];
+    final nouvellesSeries = List<PerformedSet>.from(ex.series);
+    nouvellesSeries[setIndex] = nouveau;
+    _session.exercices[exIndex] = PerformedExercise(
+      nom: ex.nom,
+      series: nouvellesSeries,
+      fait: ex.fait,
+      estDuree: ex.estDuree,
+    );
+    sessionStorage.sauvegarder(_session);
+  }
+
+  Future<void> _modifierSetForce(
+      int exIndex, int setIndex, int poidsInitial, int repsInitial) async {
+    int poidsSelectionne = poidsInitial;
+    int repsSelectionne = repsInitial;
+
+    await showDialog<void>(
+      context: context,
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, setDialogState) => AlertDialog(
+          title: Text('Modifier la série ${setIndex + 1}'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text('Poids (kg)'),
+              const SizedBox(height: 4),
+              DropdownButton<int>(
+                value: poidsSelectionne <= 0 ? null : poidsSelectionne,
+                isExpanded: true,
+                hint: const Text('--'),
+                items: List.generate(100, (i) => i + 1)
+                    .map((v) => DropdownMenuItem(value: v, child: Text('$v kg')))
+                    .toList(),
+                onChanged: (v) {
+                  poidsSelectionne = v ?? 0;
+                  setDialogState(() {});
+                },
+              ),
+              const SizedBox(height: 12),
+              const Text('Répétitions'),
+              const SizedBox(height: 4),
+              DropdownButton<int>(
+                value: repsSelectionne <= 0 ? null : repsSelectionne,
+                isExpanded: true,
+                hint: const Text('--'),
+                items: List.generate(100, (i) => i + 1)
+                    .map((v) => DropdownMenuItem(value: v, child: Text('$v')))
+                    .toList(),
+                onChanged: (v) {
+                  repsSelectionne = v ?? 0;
+                  setDialogState(() {});
+                },
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(ctx),
+              child: const Text('Annuler'),
+            ),
+            FilledButton(
+              onPressed: () {
+                _remplacerSet(
+                  exIndex,
+                  setIndex,
+                  PerformedSet(
+                    numero: _session.exercices[exIndex].series[setIndex].numero,
+                    poidsKg:
+                        poidsSelectionne == 0 ? 0.0 : poidsSelectionne.toDouble(),
+                    reps: repsSelectionne,
+                    duree: Duration.zero,
+                  ),
+                );
+                if (mounted) setState(() {});
+                Navigator.pop(ctx);
+              },
+              child: const Text('Valider'),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Future<void> _modifierSetDuree(
+      int exIndex, int setIndex, int dureeInitiale) async {
+    int dureeSelectionnee = dureeInitiale;
+
+    await showDialog<void>(
+      context: context,
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, setDialogState) => AlertDialog(
+          title: Text('Modifier la série ${setIndex + 1}'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text('Durée (secondes)'),
+              const SizedBox(height: 4),
+              DropdownButton<int>(
+                value: dureeSelectionnee <= 0 ? null : dureeSelectionnee,
+                isExpanded: true,
+                hint: const Text('--'),
+                items: List.generate(300, (i) => i + 1)
+                    .map((v) => DropdownMenuItem(value: v, child: Text('$v s')))
+                    .toList(),
+                onChanged: (v) {
+                  dureeSelectionnee = v ?? 0;
+                  setDialogState(() {});
+                },
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(ctx),
+              child: const Text('Annuler'),
+            ),
+            FilledButton(
+              onPressed: () {
+                _remplacerSet(
+                  exIndex,
+                  setIndex,
+                  PerformedSet(
+                    numero: _session.exercices[exIndex].series[setIndex].numero,
+                    poidsKg: 0.0,
+                    reps: 0,
+                    duree: Duration(seconds: dureeSelectionnee),
+                  ),
+                );
+                if (mounted) setState(() {});
+                Navigator.pop(ctx);
+              },
+              child: const Text('Valider'),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Future<void> _modifierSetCardio(
+      int exIndex, int setIndex, int minutesInit, double kmInit) async {
+    int minutesSelectionnees = minutesInit;
+    double kmSelectionnes = kmInit;
+
+    await showDialog<void>(
+      context: context,
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, setDialogState) => AlertDialog(
+          title: Text('Modifier la série ${setIndex + 1}'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text('Temps (minutes)'),
+              const SizedBox(height: 4),
+              DropdownButton<int>(
+                value: minutesSelectionnees <= 0 ? null : minutesSelectionnees,
+                isExpanded: true,
+                hint: const Text('--'),
+                items: List.generate(180, (i) => i + 1)
+                    .map((v) => DropdownMenuItem(value: v, child: Text('$v min')))
+                    .toList(),
+                onChanged: (v) {
+                  minutesSelectionnees = v ?? 0;
+                  setDialogState(() {});
+                },
+              ),
+              const SizedBox(height: 12),
+              const Text('Distance (km)'),
+              const SizedBox(height: 4),
+              DropdownButton<double>(
+                value: kmSelectionnes <= 0 ? null : kmSelectionnes,
+                isExpanded: true,
+                hint: const Text('--'),
+                items: List.generate(100, (i) => (i + 1) * 0.5)
+                    .map((v) => DropdownMenuItem(value: v, child: Text('${formatKm(v)} km')))
+                    .toList(),
+                onChanged: (v) {
+                  kmSelectionnes = v ?? 0;
+                  setDialogState(() {});
+                },
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(ctx),
+              child: const Text('Annuler'),
+            ),
+            FilledButton(
+              onPressed: () {
+                _remplacerSet(
+                  exIndex,
+                  setIndex,
+                  PerformedSet(
+                    numero: _session.exercices[exIndex].series[setIndex].numero,
+                    poidsKg: 0.0,
+                    reps: 0,
+                    duree: Duration(minutes: minutesSelectionnees),
+                    distanceKm: kmSelectionnes,
+                  ),
+                );
+                if (mounted) setState(() {});
+                Navigator.pop(ctx);
+              },
+              child: const Text('Valider'),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Future<void> _modifierSetAccessoires(
+      int exIndex, int setIndex, int secondesInit, int repsInit) async {
+    int secondesSelectionnees = secondesInit;
+    int repsSelectionnees = repsInit;
+
+    await showDialog<void>(
+      context: context,
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, setDialogState) => AlertDialog(
+          title: Text('Modifier la série ${setIndex + 1}'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text('Temps (secondes)'),
+              const SizedBox(height: 4),
+              DropdownButton<int>(
+                value: secondesSelectionnees <= 0 ? null : secondesSelectionnees,
+                isExpanded: true,
+                hint: const Text('--'),
+                items: List.generate(300, (i) => i + 1)
+                    .map((v) => DropdownMenuItem(value: v, child: Text('$v s')))
+                    .toList(),
+                onChanged: (v) {
+                  secondesSelectionnees = v ?? 0;
+                  setDialogState(() {});
+                },
+              ),
+              const SizedBox(height: 12),
+              const Text('Répétitions'),
+              const SizedBox(height: 4),
+              DropdownButton<int>(
+                value: repsSelectionnees <= 0 ? null : repsSelectionnees,
+                isExpanded: true,
+                hint: const Text('--'),
+                items: List.generate(100, (i) => i + 1)
+                    .map((v) => DropdownMenuItem(value: v, child: Text('$v')))
+                    .toList(),
+                onChanged: (v) {
+                  repsSelectionnees = v ?? 0;
+                  setDialogState(() {});
+                },
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(ctx),
+              child: const Text('Annuler'),
+            ),
+            FilledButton(
+              onPressed: () {
+                _remplacerSet(
+                  exIndex,
+                  setIndex,
+                  PerformedSet(
+                    numero: _session.exercices[exIndex].series[setIndex].numero,
+                    poidsKg: 0.0,
+                    reps: repsSelectionnees,
+                    duree: Duration(seconds: secondesSelectionnees),
+                  ),
+                );
+                if (mounted) setState(() {});
+                Navigator.pop(ctx);
+              },
+              child: const Text('Valider'),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 
   // ── Sélection d'exercice à ajouter ──
@@ -470,9 +1041,23 @@ class _SessionActivePageState extends State<SessionActivePage> {
 
   bool _isExDuree(int index) => _session.exercices[index].estDuree ?? isDureeExercice(_session.exercices[index].nom);
 
+  bool _isExCardio(int index) => _cardioExercices.contains(_session.exercices[index].nom);
+
+  bool _isExAccessoires(int index) => _accessoiresExercices.contains(_session.exercices[index].nom);
+
   int _dureeMax(int index) {
     final series = _session.exercices[index].series;
     return series.isEmpty ? 0 : series.map((s) => s.duree.inSeconds).reduce((a, b) => a > b ? a : b);
+  }
+
+  double _kmMax(int index) {
+    final series = _session.exercices[index].series;
+    return series.isEmpty ? 0 : series.map((s) => s.distanceKm ?? 0).reduce((a, b) => a > b ? a : b);
+  }
+
+  int _repsMax(int index) {
+    final series = _session.exercices[index].series;
+    return series.isEmpty ? 0 : series.map((s) => s.reps).reduce((a, b) => a > b ? a : b);
   }
 
   // ── Terminer la séance ──
@@ -540,33 +1125,21 @@ class _SessionActivePageState extends State<SessionActivePage> {
     final couleurs = Theme.of(context).colorScheme;
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Séance en cours'),
-        actions: [
-          Padding(
-            padding: const EdgeInsets.only(right: 16),
-            child: Text(
-              _formatDuration(DateTime.now().difference(_session.debut)), // Timer calculé depuis le début de session
-              style: Theme.of(context).textTheme.headlineSmall?.copyWith(fontFamily: 'monospace'),
-            ),
-          ),
-        ],
+      appBar: AppBar(title: const Text('Séance en cours')),
+      floatingActionButton: FloatingActionButton.extended(
+        onPressed: _choisirExercice,
+        icon: const Icon(Icons.add),
+        label: const Text('Ajouter\nun exercice'),
       ),
-      floatingActionButton: Column(mainAxisSize: MainAxisSize.min, children: [
-        FloatingActionButton.extended(
-          onPressed: _choisirExercice,
-          icon: const Icon(Icons.add),
-          label: const Text('Ajouter\nun exercice'),
-        ),
-        const SizedBox(height: 8),
-        if (_session.exercices.isNotEmpty)
-          FloatingActionButton.extended(
-            onPressed: _terminer,
-            backgroundColor: couleurs.error,
-            icon: const Icon(Icons.check_circle),
-            label: const Text('Terminer\nla séance'),
-          ),
-      ]),
+      bottomNavigationBar: _session.exercices.isEmpty
+          ? null
+          : SafeArea(
+              top: false,
+              child: Padding(
+                padding: const EdgeInsets.all(Sp.lg),
+                child: FinishWorkoutButton(onPressed: _terminer),
+              ),
+            ),
       body: _session.exercices.isEmpty
           ? Center(
               child: Column(
@@ -586,6 +1159,32 @@ class _SessionActivePageState extends State<SessionActivePage> {
           : ListView(
               padding: const EdgeInsets.all(16),
               children: [
+                // Chrono géant
+                Card(
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(
+                        vertical: Sp.xl, horizontal: Sp.lg),
+                    child: Column(
+                      children: [
+                        Text(
+                          _formatDuration(
+                              DateTime.now().difference(_session.debut)),
+                          style: Theme.of(context).textTheme.displayLarge,
+                        ),
+                        const SizedBox(height: Sp.sm),
+                        Text(
+                          'Durée de la séance',
+                          style: Theme.of(context)
+                              .textTheme
+                              .bodyMedium
+                              ?.copyWith(color: couleurs.onSurfaceVariant),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 16),
+
                 // Résumé rapide
                 Card(
                   color: couleurs.primaryContainer,
@@ -631,25 +1230,35 @@ class _SessionActivePageState extends State<SessionActivePage> {
                           color: _session.exercices[i].fait ? couleurs.outline : null,
                         ),
                       ),
-                      subtitle: _isExDuree(i)
-                          ? Text('${_session.exercices[i].totalSeries} série(s) · Durée max : ${_dureeMax(i)}s')
-                          : Text('${_session.exercices[i].totalSeries} série(s) · Max ${_session.exercices[i].poidsMax.toStringAsFixed(1)} kg'),
+                      subtitle: _isExCardio(i)
+                          ? Text('${_session.exercices[i].totalSeries} série(s) · Max ${formatKm(_kmMax(i))} km')
+                          : _isExAccessoires(i)
+                              ? Text('${_session.exercices[i].totalSeries} série(s) · Max ${_repsMax(i)} reps')
+                              : _isExDuree(i)
+                                  ? Text('${_session.exercices[i].totalSeries} série(s) · Durée max : ${_dureeMax(i)}s')
+                                  : Text('${_session.exercices[i].totalSeries} série(s) · Max ${_session.exercices[i].poidsMax.toStringAsFixed(1)} kg'),
                       children: [
                         for (int j = 0; j < _session.exercices[i].series.length; j++)
                           Dismissible(
                             key: Key('$i-$j'),
                             direction: DismissDirection.endToStart,
-                            background: Container(color: Colors.red),
+                            background: Container(
+                              color: Colors.red,
+                              alignment: Alignment.centerRight,
+                              padding: const EdgeInsets.only(right: 20),
+                              child: const Icon(Icons.delete, color: Colors.white),
+                            ),
                             onDismissed: (_) => _supprimerSet(i, j),
-                            child: ListTile(
-                              leading: CircleAvatar(child: Text('${_session.exercices[i].series[j].numero}')),
-                              title: _isExDuree(i)
-                                  ? Text('Durée : ${_session.exercices[i].series[j].duree.inSeconds}s')
-                                  : Row(children: [
-                                      Text('Poids : ${_session.exercices[i].series[j].poidsKg.toStringAsFixed(1)} kg'),
-                                      const SizedBox(width: 16),
-                                      Text('${_session.exercices[i].series[j].reps} reps'),
-                                    ]),
+                            child: SetRow(
+                              index: _session.exercices[i].series[j].numero,
+                              valeur: _isExCardio(i)
+                                  ? '${_session.exercices[i].series[j].duree.inMinutes} min · ${formatKm(_session.exercices[i].series[j].distanceKm ?? 0)} km'
+                                  : _isExAccessoires(i)
+                                      ? '${_session.exercices[i].series[j].duree.inSeconds} s × ${_session.exercices[i].series[j].reps} reps'
+                                      : _isExDuree(i)
+                                          ? '${_session.exercices[i].series[j].duree.inSeconds} s'
+                                          : '${_session.exercices[i].series[j].poidsKg.toStringAsFixed(1)} kg × ${_session.exercices[i].series[j].reps} reps',
+                              onEdit: () => _modifierSet(i, j),
                             ),
                           ),
                         // Bouton ajouter un set directement dans le ListTile
@@ -687,6 +1296,14 @@ class SessionBilanPage extends StatelessWidget {
 
   int _dureeMaxEx(PerformedExercise ex) {
     return ex.series.isEmpty ? 0 : ex.series.map((s) => s.duree.inSeconds).reduce((a, b) => a > b ? a : b);
+  }
+
+  double _kmMaxEx(PerformedExercise ex) {
+    return ex.series.isEmpty ? 0 : ex.series.map((s) => s.distanceKm ?? 0).reduce((a, b) => a > b ? a : b);
+  }
+
+  int _repsMaxEx(PerformedExercise ex) {
+    return ex.series.isEmpty ? 0 : ex.series.map((s) => s.reps).reduce((a, b) => a > b ? a : b);
   }
 
   @override
@@ -740,17 +1357,29 @@ class SessionBilanPage extends StatelessWidget {
                     color: ex.fait ? couleurs.outline : null,
                   ),
                 ),
-                subtitle: (ex.estDuree ?? SessionActivePage.isDureeExercice(ex.nom))
-                    ? Text('${ex.totalSeries} série(s) · Durée max : ${_dureeMaxEx(ex)}s')
-                    : Text('${ex.totalSeries} série(s) · Max ${ex.poidsMax.toStringAsFixed(1)} kg'),
+                subtitle: SessionActivePage.isCardioExercice(ex.nom)
+                    ? Text('${ex.totalSeries} série(s) · Max ${formatKm(_kmMaxEx(ex))} km')
+                    : SessionActivePage.isAccessoiresExercice(ex.nom)
+                        ? Text('${ex.totalSeries} série(s) · Max ${_repsMaxEx(ex)} reps')
+                        : (ex.estDuree ?? SessionActivePage.isDureeExercice(ex.nom))
+                            ? Text('${ex.totalSeries} série(s) · Durée max : ${_dureeMaxEx(ex)}s')
+                            : Text('${ex.totalSeries} série(s) · Max ${ex.poidsMax.toStringAsFixed(1)} kg'),
                 children: [
                   for (int i = 0; i < ex.series.length; i++)
                     ListTile(
                       leading: CircleAvatar(child: Text('${ex.series[i].numero}')),
-                      title: (ex.estDuree ?? SessionActivePage.isDureeExercice(ex.nom))
-                          ? Text('Durée : ${ex.series[i].duree.inSeconds}s')
-                          : Text('${ex.series[i].poidsKg.toStringAsFixed(1)} kg'),
-                      trailing: (ex.estDuree ?? SessionActivePage.isDureeExercice(ex.nom)) ? null : Text('${ex.series[i].reps} reps'),
+                      title: SessionActivePage.isCardioExercice(ex.nom)
+                          ? Text('${ex.series[i].duree.inMinutes} min · ${formatKm(ex.series[i].distanceKm ?? 0)} km')
+                          : SessionActivePage.isAccessoiresExercice(ex.nom)
+                              ? Text('${ex.series[i].duree.inSeconds} s × ${ex.series[i].reps} reps')
+                              : (ex.estDuree ?? SessionActivePage.isDureeExercice(ex.nom))
+                                  ? Text('Durée : ${ex.series[i].duree.inSeconds}s')
+                                  : Text('${ex.series[i].poidsKg.toStringAsFixed(1)} kg'),
+                      trailing: (SessionActivePage.isCardioExercice(ex.nom) ||
+                              SessionActivePage.isAccessoiresExercice(ex.nom) ||
+                              (ex.estDuree ?? SessionActivePage.isDureeExercice(ex.nom)))
+                          ? null
+                          : Text('${ex.series[i].reps} reps'),
                     ),
                 ],
               ),

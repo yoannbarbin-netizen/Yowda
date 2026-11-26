@@ -6,6 +6,7 @@ import 'data/session_hive.dart';
 import 'theme/app_theme.dart';
 
 Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
   await Hive.initFlutter();
   await sessionStorage.init();
   runApp(const AppliMuscu());

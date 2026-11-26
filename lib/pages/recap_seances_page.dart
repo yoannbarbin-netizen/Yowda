@@ -2,21 +2,23 @@ import 'package:flutter/material.dart';
 
 import '../data/session_hive.dart';
 import '../models/session.dart';
+import '../theme/app_theme.dart';
 import 'session_active_page.dart';
 
 /// Écran « Récap de mes séances » : historique des séances enregistrées
 /// (date, durée, exercices et séries). Glisse une carte vers la gauche
-/// pour supprimer une séance.
+/// pour supprimer une séance, ou recherche un exercice pour filtrer.
 class RecapSeancesPage extends StatefulWidget {
   const RecapSeancesPage({super.key});
 
   @override
-  State<RecapSeancesPage> createState() => _RecapSeancesPageState();
+  State<RecapSeancesPage> createState() => RecapSeancesPageState();
 }
 
-class _RecapSeancesPageState extends State<RecapSeancesPage> {
+class RecapSeancesPageState extends State<RecapSeancesPage> {
   List<WorkoutSession> _sessions = [];
   bool _chargement = true;
+  String _recherche = '';
 
   static const List<String> _jours = [
     'lundi',
@@ -45,6 +47,17 @@ class _RecapSeancesPageState extends State<RecapSeancesPage> {
     }
   }
 
+  /// Recharge l'historique (appelé par le shell quand l'onglet devient actif).
+  Future<void> rafraichir() => _charger();
+
+  List<WorkoutSession> get _affichees {
+    if (_recherche.trim().isEmpty) return _sessions;
+    final q = _recherche.trim().toLowerCase();
+    return _sessions
+        .where((s) => s.exercices.any((e) => e.nom.toLowerCase().contains(q)))
+        .toList();
+  }
+
   String _formatDate(DateTime d) {
     final jour = _jours[d.weekday - 1];
     final dd = d.day.toString().padLeft(2, '0');
@@ -63,6 +76,17 @@ class _RecapSeancesPageState extends State<RecapSeancesPage> {
 
   String _resumeExercice(PerformedExercise ex) {
     if (ex.series.isEmpty) return 'Aucune série';
+    if (SessionActivePage.isCardioExercice(ex.nom)) {
+      final maxKm = ex.series
+          .map((s) => s.distanceKm ?? 0)
+          .reduce((a, b) => a > b ? a : b);
+      return 'Max ${formatKm(maxKm)} km';
+    }
+    if (SessionActivePage.isAccessoiresExercice(ex.nom)) {
+      final repsMax =
+          ex.series.map((s) => s.reps).reduce((a, b) => a > b ? a : b);
+      return 'Max $repsMax reps';
+    }
     final estDuree = ex.estDuree ?? SessionActivePage.isDureeExercice(ex.nom);
     if (estDuree) {
       final max =
@@ -99,88 +123,166 @@ class _RecapSeancesPageState extends State<RecapSeancesPage> {
 
   @override
   Widget build(BuildContext context) {
-    final couleurs = Theme.of(context).colorScheme;
+    final t = Theme.of(context);
+    final couleurs = t.colorScheme;
 
     return Scaffold(
       appBar: AppBar(title: const Text('Récap de mes séances')),
       body: _chargement
           ? const Center(child: CircularProgressIndicator())
-          : _sessions.isEmpty
-              ? Center(
-                  child: Padding(
-                    padding: const EdgeInsets.all(24),
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(Icons.history, size: 64, color: couleurs.outline),
-                        const SizedBox(height: 16),
-                        const Text(
-                          "Aucune séance enregistrée pour l'instant.\nTermine une séance d'entraînement pour la retrouver ici.",
-                          textAlign: TextAlign.center,
-                        ),
-                      ],
+          : Column(
+              children: [
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(Sp.lg, Sp.lg, Sp.lg, 0),
+                  child: TextField(
+                    onChanged: (v) => setState(() => _recherche = v),
+                    decoration: const InputDecoration(
+                      hintText: 'Rechercher un exercice...',
+                      prefixIcon: Icon(Icons.search_rounded),
                     ),
                   ),
-                )
-              : ListView(
-                  padding: const EdgeInsets.all(16),
-                  children: [
-                    for (final s in _sessions)
-                      Dismissible(
-                        key: Key('session-${s.debut.millisecondsSinceEpoch}'),
-                        direction: DismissDirection.endToStart,
-                        background: Container(
-                          color: Colors.red,
-                          alignment: Alignment.centerRight,
-                          padding: const EdgeInsets.only(right: 20),
-                          child: const Icon(Icons.delete, color: Colors.white),
-                        ),
-                        confirmDismiss: (_) async {
-                          await _supprimer(s);
-                          return false;
-                        },
-                        child: Card(
-                          child: ExpansionTile(
-                            leading: Icon(Icons.event, color: couleurs.primary),
-                            title: Text(
-                              _formatDate(s.debut),
-                              style: const TextStyle(fontWeight: FontWeight.bold),
-                            ),
-                            subtitle: Text(
-                              '${s.exercices.length} exercice(s) · ${s.totalSeries} série(s) · ${_formatDuree(s.dureeTotale())}'
-                              '${s.estTerminee ? '' : ' · en cours'}',
-                            ),
-                            children: [
-                              if (s.exercices.isEmpty)
-                                const Padding(
-                                  padding: EdgeInsets.all(16),
-                                  child: Text('Aucun exercice dans cette séance.'),
+                ),
+                Expanded(
+                  child: _sessions.isEmpty
+                      ? Center(
+                          child: Padding(
+                            padding: const EdgeInsets.all(Sp.xl),
+                            child: Column(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(Icons.history,
+                                    size: 64, color: couleurs.outline),
+                                const SizedBox(height: Sp.lg),
+                                const Text(
+                                  "Aucune séance enregistrée pour l'instant.\nTermine une séance d'entraînement pour la retrouver ici.",
+                                  textAlign: TextAlign.center,
                                 ),
-                              for (final ex in s.exercices)
-                                ListTile(
-                                  dense: true,
-                                  leading: Icon(
-                                    ex.fait ? Icons.check_circle : Icons.fitness_center,
-                                    size: 20,
-                                    color: ex.fait ? Colors.green : couleurs.outline,
-                                  ),
-                                  title: Text(
-                                    ex.nom,
-                                    style: TextStyle(
-                                      decoration: ex.fait
-                                          ? TextDecoration.lineThrough
-                                          : TextDecoration.none,
+                              ],
+                            ),
+                          ),
+                        )
+                      : _affichees.isEmpty
+                          ? Center(
+                              child: Padding(
+                                padding: const EdgeInsets.all(Sp.xl),
+                                child: Text(
+                                  'Aucune séance ne contient « $_recherche ».',
+                                  textAlign: TextAlign.center,
+                                ),
+                              ),
+                            )
+                          : ListView(
+                              padding: const EdgeInsets.all(Sp.lg),
+                              children: [
+                                for (final s in _affichees)
+                                  Dismissible(
+                                    key: Key(
+                                        'session-${s.debut.millisecondsSinceEpoch}'),
+                                    direction: DismissDirection.endToStart,
+                                    background: Container(
+                                      color: Colors.red,
+                                      alignment: Alignment.centerRight,
+                                      padding: const EdgeInsets.only(right: 20),
+                                      child: const Icon(Icons.delete,
+                                          color: Colors.white),
+                                    ),
+                                    confirmDismiss: (_) async {
+                                      await _supprimer(s);
+                                      return false;
+                                    },
+                                    child: Card(
+                                      child: ExpansionTile(
+                                        leading: _AnneauReussite(
+                                          fait: s.exercices
+                                              .where((e) => e.fait)
+                                              .length,
+                                          total: s.exercices.length,
+                                        ),
+                                        title: Text(
+                                          _formatDate(s.debut),
+                                          style: const TextStyle(
+                                              fontWeight: FontWeight.bold),
+                                        ),
+                                        subtitle: Text(
+                                          '${s.exercices.length} exercice(s) · ${s.totalSeries} série(s) · ${_formatDuree(s.dureeTotale())}'
+                                          '${s.estTerminee ? '' : ' · en cours'}',
+                                        ),
+                                        children: [
+                                          if (s.exercices.isEmpty)
+                                            const Padding(
+                                              padding: EdgeInsets.all(16),
+                                              child: Text(
+                                                  'Aucun exercice dans cette séance.'),
+                                            ),
+                                          for (final ex in s.exercices)
+                                            ListTile(
+                                              dense: true,
+                                              leading: Icon(
+                                                ex.fait
+                                                    ? Icons.check_circle
+                                                    : Icons.fitness_center,
+                                                size: 20,
+                                                color: ex.fait
+                                                    ? Colors.green
+                                                    : couleurs.outline,
+                                              ),
+                                              title: Text(
+                                                ex.nom,
+                                                style: TextStyle(
+                                                  decoration: ex.fait
+                                                      ? TextDecoration.lineThrough
+                                                      : TextDecoration.none,
+                                                ),
+                                              ),
+                                              subtitle: Text(_resumeExercice(ex)),
+                                              trailing: Text(
+                                                  '${ex.totalSeries} série(s)'),
+                                            ),
+                                        ],
+                                      ),
                                     ),
                                   ),
-                                  subtitle: Text(_resumeExercice(ex)),
-                                  trailing: Text('${ex.totalSeries} série(s)'),
-                                ),
-                            ],
-                          ),
-                        ),
-                      ),
-                  ],
+                              ],
+                            ),
                 ),
+              ],
+            ),
+    );
+  }
+}
+
+/// Anneau de réussite : part des exercices barrés dans la séance.
+class _AnneauReussite extends StatelessWidget {
+  const _AnneauReussite({required this.fait, required this.total});
+
+  final int fait;
+  final int total;
+
+  @override
+  Widget build(BuildContext context) {
+    final t = Theme.of(context);
+    final s = t.colorScheme;
+    final success = t.extension<CategoryColors>()?.success ?? s.primary;
+    final value = total == 0 ? 0.0 : fait / total;
+    return SizedBox(
+      width: 44,
+      height: 44,
+      child: Stack(
+        alignment: Alignment.center,
+        children: [
+          SizedBox(
+            width: 40,
+            height: 40,
+            child: CircularProgressIndicator(
+              value: value,
+              strokeWidth: 4,
+              backgroundColor: s.outlineVariant,
+              color: success,
+            ),
+          ),
+          Text('$fait/$total', style: t.textTheme.labelSmall),
+        ],
+      ),
     );
   }
 }

@@ -17,12 +17,24 @@ class AppShell extends StatefulWidget {
 class _AppShellState extends State<AppShell> {
   int _index = 0;
 
-  static const List<Widget> _pages = <Widget>[
-    AccueilPage(),
-    ExercicesPage(),
-    RecapSeancesPage(),
-    ProfilPage(),
+  // Clés des onglets : l'IndexedStack garde les pages en vie (leur initState ne
+  // rejoue pas), donc on recharge leurs données quand on revient sur l'onglet.
+  final GlobalKey<AccueilPageState> _accueilKey = GlobalKey<AccueilPageState>();
+  final GlobalKey<RecapSeancesPageState> _recapKey = GlobalKey<RecapSeancesPageState>();
+
+  late final List<Widget> _pages = <Widget>[
+    AccueilPage(key: _accueilKey),
+    const ExercicesPage(),
+    RecapSeancesPage(key: _recapKey),
+    const ProfilPage(),
   ];
+
+  void _onDestination(int i) {
+    setState(() => _index = i);
+    // Recharge les données de l'onglet qui vient d'être ouvert.
+    if (i == 0) _accueilKey.currentState?.rafraichir();
+    if (i == 2) _recapKey.currentState?.rafraichir();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -30,7 +42,7 @@ class _AppShellState extends State<AppShell> {
       body: IndexedStack(index: _index, children: _pages),
       bottomNavigationBar: NavigationBar(
         selectedIndex: _index,
-        onDestinationSelected: (i) => setState(() => _index = i),
+        onDestinationSelected: _onDestination,
         destinations: const [
           NavigationDestination(
               icon: Icon(Icons.home_outlined),
