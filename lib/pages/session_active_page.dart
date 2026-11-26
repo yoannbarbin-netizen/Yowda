@@ -2,7 +2,9 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 
+import '../data/alerte.dart';
 import '../data/crossfit.dart';
+import '../data/echauffements.dart';
 import '../data/session_hive.dart';
 import '../models/session.dart';
 import '../salle_page.dart';
@@ -12,6 +14,48 @@ import '../widgets/set_row.dart';
 
 /// Formate une distance en km : 5.0 → « 5 », 5.5 → « 5.5 ».
 String formatKm(double v) => v % 1 == 0 ? '${v.toInt()}' : '$v';
+
+/// Minuteur d'une série à durée (ou d'un échauffement) : décompte seconde par
+/// seconde + alerte (vibration + son) quand il arrive à zéro.
+class _ChronoSet {
+  final int totalSecondes;
+  int restant;
+  bool demarre = false;
+  bool enPause = false;
+  bool fini = false;
+
+  _ChronoSet(this.totalSecondes) : restant = totalSecondes;
+
+  Duration get reste => Duration(seconds: restant);
+  double get progression =>
+      totalSecondes == 0 ? 0.0 : restant / totalSecondes;
+
+  void demarrer() {
+    demarre = true;
+    enPause = false;
+    fini = false;
+  }
+
+  void pause() {
+    if (demarre && !fini) enPause = true;
+  }
+
+  void reprendre() {
+    if (demarre && !fini && enPause) enPause = false;
+  }
+
+  void relancer() {
+    restant = totalSecondes;
+    demarrer();
+  }
+
+  /// Un tic de seconde (appelé par le chrono global de la page).
+  void tic() {
+    if (!demarre || enPause || fini) return;
+    if (restant > 0) restant--;
+    if (restant == 0) fini = true;
+  }
+}
 
 /// Callback déclenché quand l'utilisateur appuie sur "Ajouter à l'entraînement actif".
 typedef OnAjouterExercice = void Function(String nomExercise);
@@ -97,6 +141,10 @@ class SessionActivePage extends StatefulWidget {
 class _SessionActivePageState extends State<SessionActivePage> with WidgetsBindingObserver {
   late WorkoutSession _session;
   Timer? _timer;
+
+  /// Minuteurs par série à durée : clé = « nom#numero ».
+  /// (Clé « nom#echauffement » pour le décompte d'échauffement conseillé.)
+  final Map<String, _ChronoSet> _chronos = {};
 
   // Exercices dont l'effort se mesure en durée, pas en poids/répétitions.
   // Recense tous les noms des catégories Échauffement, Étirements et Sans matériel.
@@ -248,9 +296,11 @@ class _SessionActivePageState extends State<SessionActivePage> with WidgetsBindi
       _session = WorkoutSession.vierge();
       Future.microtask(() => setState(() {}));
     }
-    // Chrono temps réel : met à jour l'affichage de la durée chaque seconde.
+    // Chrono temps réel : met à jour la durée et les minuteurs chaque seconde.
     _timer = Timer.periodic(const Duration(seconds: 1), (_) {
-      if (mounted) setState(() {});
+      if (!mounted) return;
+      _tickChronos();
+      setState(() {});
     });
   }
 
@@ -299,6 +349,15 @@ class _SessionActivePageState extends State<SessionActivePage> with WidgetsBindi
     // CrossFit : durée en secondes (tenues, gainage).
     if (_tempsCrossfit.contains(nomExercise)) {
       await _ajouterSetDuree(nomExercise);
+      return;
+    }
+
+    // Échauffement / étirements : durée (ou répétitions) imposée par la fiche,
+    // ajout direct sans aucun réglage.
+    final prescription = prescriptionImposee(nomExercise);
+    if (prescription != null) {
+      _enregistrerSetImpose(nomExercise, prescription);
+      if (mounted) setState(() {});
       return;
     }
 
@@ -442,6 +501,7 @@ class _SessionActivePageState extends State<SessionActivePage> with WidgetsBindi
 
                 // Sauvegarde Hive
                 sessionStorage.sauvegarder(_session);
+                _autoChrono(nomExercise);
 
                 if (mounted) setState(() {});
                 Navigator.pop(ctx);
@@ -574,6 +634,7 @@ class _SessionActivePageState extends State<SessionActivePage> with WidgetsBindi
 
     // Sauvegarde Hive
     sessionStorage.sauvegarder(_session);
+    _autoChrono(nomExercise);
   }
 
   // ── Accessoires : temps (secondes) + répétitions ──
@@ -668,6 +729,7 @@ class _SessionActivePageState extends State<SessionActivePage> with WidgetsBindi
 
     // Sauvegarde Hive
     sessionStorage.sauvegarder(_session);
+    _autoChrono(nomExercise);
   }
 
   // ── CrossFit : répétitions seules ──
@@ -746,6 +808,44 @@ class _SessionActivePageState extends State<SessionActivePage> with WidgetsBindi
 
     // Sauvegarde Hive
     sessionStorage.sauvegarder(_session);
+    _autoChrono(nomExercise);
+  }
+
+  /// Ajoute un set avec la prescription imposée par la fiche
+  /// (échauffement / étirements) : aucun réglage utilisateur.
+  void _enregistrerSetImpose(String nomExercise, PrescriptionImposee prescription) {
+    final duree = prescription.secondes == null
+        ? Duration.zero
+        : Duration(seconds: prescription.secondes!);
+    final reps = prescription.reps ?? 0;
+    final existing = _session.exercices.indexWhere((e) => e.nom == nomExercise);
+    if (existing != -1) {
+      final set = PerformedSet(
+        numero: _session.exercices[existing].series.length + 1,
+        poidsKg: 0.0,
+        reps: reps,
+        duree: duree,
+      );
+      _session.exercices[existing] = PerformedExercise(
+        nom: nomExercise,
+        series: List.from(_session.exercices[existing].series)..add(set),
+        fait: _session.exercices[existing].fait,
+        estDuree: _session.exercices[existing].estDuree,
+      );
+    } else {
+      final set = PerformedSet(
+        numero: 1,
+        poidsKg: 0.0,
+        reps: reps,
+        duree: duree,
+      );
+      _session.exercices
+          .add(PerformedExercise(nom: nomExercise, series: [set], estDuree: true));
+    }
+
+    // Sauvegarde Hive
+    sessionStorage.sauvegarder(_session);
+    _autoChrono(nomExercise);
   }
 
   void _enregistrerSetForce(String nomExercise, double poids, int reps) {
@@ -775,6 +875,7 @@ class _SessionActivePageState extends State<SessionActivePage> with WidgetsBindi
 
     // Sauvegarde Hive
     sessionStorage.sauvegarder(_session);
+    _autoChrono(nomExercise);
   }
 
   void _supprimerSet(int exerciseIndex, int setIndex) {
@@ -797,6 +898,7 @@ class _SessionActivePageState extends State<SessionActivePage> with WidgetsBindi
       estDuree: ex.estDuree,
     );
     sessionStorage.sauvegarder(_session);
+    _chronos.removeWhere((k, v) => k.startsWith('${ex.nom}#'));
     if (mounted) setState(() {});
   }
 
@@ -842,6 +944,12 @@ class _SessionActivePageState extends State<SessionActivePage> with WidgetsBindi
       estDuree: ex.estDuree,
     );
     sessionStorage.sauvegarder(_session);
+    // Redémarre le minuteur si la série modifiée a une durée.
+    final cle = '${ex.nom}#${nouveau.numero}';
+    _chronos.remove(cle);
+    if (nouveau.duree > Duration.zero) {
+      _chronos[cle] = _ChronoSet(nouveau.duree.inSeconds)..demarrer();
+    }
   }
 
   Future<void> _modifierSetForce(
@@ -1303,6 +1411,19 @@ class _SessionActivePageState extends State<SessionActivePage> with WidgetsBindi
     return 'Max ${_dureeMax(index) ~/ 60} min';
   }
 
+  /// Résumé d'un exercice à durée : temps si présent, sinon répétitions
+  /// (certains échauffements sont prescrits en répétitions).
+  String _resumeDuree(int i) {
+    if (_dureeMax(i) > 0) return 'Durée max : ${_dureeMax(i)}s';
+    return 'Max ${_repsMax(i)} reps';
+  }
+
+  /// Démarre le chrono réel de la séance (bouton « Démarrer l'entraînement »).
+  void _demarrerEntrainement() {
+    setState(() => _session.debutChrono = DateTime.now());
+    sessionStorage.sauvegarder(_session);
+  }
+
   // ── Terminer la séance ──
 
   Future<void> _terminer() async {
@@ -1351,6 +1472,156 @@ class _SessionActivePageState extends State<SessionActivePage> with WidgetsBindi
     final m = (d.inMinutes % 60).toString().padLeft(2, '0');
     final s = (d.inSeconds % 60).toString().padLeft(2, '0');
     return '$h:$m:$s';
+  }
+
+  // ── Minuteurs de séries (décompte + alerte) ──
+
+  String _formatChrono(Duration d) {
+    final h = d.inHours;
+    final m = (d.inMinutes % 60).toString().padLeft(2, '0');
+    final s = (d.inSeconds % 60).toString().padLeft(2, '0');
+    return h > 0 ? '$h:$m:$s' : '$m:$s';
+  }
+
+  /// Un tic par seconde : décompte les minuteurs, alerte à zéro
+  /// (vibration + signal sonore système, sans regarder l'écran).
+  void _tickChronos() {
+    for (final c in _chronos.values) {
+      final avant = c.fini;
+      c.tic();
+      if (!avant && c.fini) {
+        alerteFinChrono();
+      }
+    }
+  }
+
+  /// Démarre automatiquement le minuteur de la dernière série si elle a une durée.
+  void _autoChrono(String nom) {
+    final idx = _session.exercices.indexWhere((e) => e.nom == nom);
+    if (idx == -1) return;
+    final series = _session.exercices[idx].series;
+    if (series.isEmpty) return;
+    final dernier = series.last;
+    if (dernier.duree > Duration.zero) {
+      _chronos['$nom#${dernier.numero}'] =
+          _ChronoSet(dernier.duree.inSeconds)..demarrer();
+    }
+  }
+
+  void _basculerChrono(_ChronoSet c) {
+    if (c.fini) {
+      c.relancer();
+    } else if (!c.demarre) {
+      c.demarrer();
+    } else if (c.enPause) {
+      c.reprendre();
+    } else {
+      c.pause();
+    }
+    setState(() {});
+  }
+
+  Widget _bandeauMinuteur(_ChronoSet c, VoidCallback onBasculer) {
+    final t = Theme.of(context);
+    final fini = c.fini;
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(46, 0, 12, 6),
+      child: Row(
+        children: [
+          Icon(Icons.timer_outlined,
+              size: 18,
+              color: fini ? Colors.green : t.colorScheme.primary),
+          const SizedBox(width: 8),
+          SizedBox(
+            width: 52,
+            child: Text(
+              fini ? 'Fini !' : _formatChrono(c.reste),
+              style: t.textTheme.labelLarge?.copyWith(
+                  color: fini ? Colors.green : null,
+                  fontWeight: FontWeight.w600),
+            ),
+          ),
+          const SizedBox(width: 8),
+          Expanded(
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(6),
+              child: LinearProgressIndicator(
+                value: c.progression,
+                minHeight: 8,
+                backgroundColor: t.colorScheme.surfaceContainerHighest,
+                color: fini ? Colors.green : t.colorScheme.primary,
+              ),
+            ),
+          ),
+          IconButton(
+            visualDensity: VisualDensity.compact,
+            tooltip: fini
+                ? 'Relancer'
+                : (c.demarre && !c.enPause ? 'Pause' : 'Démarrer'),
+            onPressed: onBasculer,
+            icon: Icon(
+              fini
+                  ? Icons.refresh_rounded
+                  : (c.demarre && !c.enPause
+                      ? Icons.pause_rounded
+                      : Icons.play_arrow_rounded),
+              size: 20,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// Barre de décompte sous une série à durée (progressbar inversée).
+  Widget _bandeauChronoSet(int i, int j) {
+    final set = _session.exercices[i].series[j];
+    final cle = '${_session.exercices[i].nom}#${set.numero}';
+    final c = _chronos[cle] ?? _ChronoSet(set.duree.inSeconds);
+    return _bandeauMinuteur(c, () {
+      if (_chronos[cle] == null) {
+        setState(
+            () => _chronos[cle] = _ChronoSet(set.duree.inSeconds)..demarrer());
+      } else {
+        _basculerChrono(_chronos[cle]!);
+      }
+    });
+  }
+
+  /// Ligne « Échauffement conseillé : X min » + décompte lançable.
+  Widget _ligneEchauffement(int i) {
+    final nom = _session.exercices[i].nom;
+    final reco = echauffementPour(nom);
+    if (reco.minutes <= 0) return const SizedBox.shrink();
+    final cle = '$nom#echauffement';
+    final c = _chronos[cle];
+    if (c != null) {
+      return _bandeauMinuteur(c, () => _basculerChrono(c));
+    }
+    final t = Theme.of(context);
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 8, 8, 0),
+      child: Row(
+        children: [
+          const Icon(Icons.local_fire_department_rounded,
+              size: 18, color: Colors.deepOrange),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              'Échauffement conseillé : ${reco.minutes} min',
+              style:
+                  t.textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w600),
+            ),
+          ),
+          TextButton(
+            onPressed: () => setState(() {
+              _chronos[cle] = _ChronoSet(reco.minutes * 60)..demarrer();
+            }),
+            child: const Text('Démarrer'),
+          ),
+        ],
+      ),
+    );
   }
 
   // ── UI ──
@@ -1402,7 +1673,7 @@ class _SessionActivePageState extends State<SessionActivePage> with WidgetsBindi
           : ListView(
               padding: const EdgeInsets.all(16),
               children: [
-                // Chrono géant
+                // Chrono géant (démarré par l'utilisateur, temps réel).
                 Card(
                   child: Padding(
                     padding: const EdgeInsets.symmetric(
@@ -1410,8 +1681,10 @@ class _SessionActivePageState extends State<SessionActivePage> with WidgetsBindi
                     child: Column(
                       children: [
                         Text(
-                          _formatDuration(
-                              DateTime.now().difference(_session.debut)),
+                          _formatDuration(_session.debutChrono == null
+                              ? Duration.zero
+                              : DateTime.now()
+                                  .difference(_session.debutChrono!)),
                           style: Theme.of(context).textTheme.displayLarge,
                         ),
                         const SizedBox(height: Sp.sm),
@@ -1422,6 +1695,14 @@ class _SessionActivePageState extends State<SessionActivePage> with WidgetsBindi
                               .bodyMedium
                               ?.copyWith(color: couleurs.onSurfaceVariant),
                         ),
+                        if (_session.debutChrono == null) ...[
+                          const SizedBox(height: Sp.md),
+                          FilledButton.icon(
+                            icon: const Icon(Icons.play_circle_fill_rounded),
+                            label: const Text("Démarrer l'entraînement"),
+                            onPressed: _demarrerEntrainement,
+                          ),
+                        ],
                       ],
                     ),
                   ),
@@ -1480,9 +1761,10 @@ class _SessionActivePageState extends State<SessionActivePage> with WidgetsBindi
                               : _isExReps(i)
                                   ? Text('${_session.exercices[i].totalSeries} série(s) · Max ${_repsMax(i)} reps')
                                   : _isExDuree(i)
-                                  ? Text('${_session.exercices[i].totalSeries} série(s) · Durée max : ${_dureeMax(i)}s')
+                                  ? Text('${_session.exercices[i].totalSeries} série(s) · ${_resumeDuree(i)}')
                                   : Text('${_session.exercices[i].totalSeries} série(s) · Max ${_session.exercices[i].poidsMax.toStringAsFixed(1)} kg'),
                       children: [
+                        _ligneEchauffement(i),
                         for (int j = 0; j < _session.exercices[i].series.length; j++)
                           Dismissible(
                             key: Key('$i-$j'),
@@ -1494,9 +1776,11 @@ class _SessionActivePageState extends State<SessionActivePage> with WidgetsBindi
                               child: const Icon(Icons.delete, color: Colors.white),
                             ),
                             onDismissed: (_) => _supprimerSet(i, j),
-                            child: SetRow(
-                              index: _session.exercices[i].series[j].numero,
-                              valeur: _isExCardio(i)
+                            child: Column(
+                              children: [
+                                SetRow(
+                                  index: _session.exercices[i].series[j].numero,
+                                  valeur: _isExCardio(i)
                                   ? (_session.exercices[i].series[j].distanceKm != null
                                       ? '${formatKm(_session.exercices[i].series[j].distanceKm!)} km'
                                       : '${_session.exercices[i].series[j].duree.inMinutes} min')
@@ -1505,9 +1789,15 @@ class _SessionActivePageState extends State<SessionActivePage> with WidgetsBindi
                                       : _isExReps(i)
                                           ? '${_session.exercices[i].series[j].reps} reps'
                                           : _isExDuree(i)
-                                          ? '${_session.exercices[i].series[j].duree.inSeconds} s'
+                                          ? (_session.exercices[i].series[j].duree.inSeconds > 0
+                                              ? '${_session.exercices[i].series[j].duree.inSeconds} s'
+                                              : '${_session.exercices[i].series[j].reps} reps')
                                           : '${_session.exercices[i].series[j].poidsKg.toStringAsFixed(1)} kg × ${_session.exercices[i].series[j].reps} reps',
-                              onEdit: () => _modifierSet(i, j),
+                                  onEdit: () => _modifierSet(i, j),
+                                ),
+                                if (_session.exercices[i].series[j].duree > Duration.zero)
+                                  _bandeauChronoSet(i, j),
+                              ],
                             ),
                           ),
                         // Bouton ajouter un set directement dans le ListTile
@@ -1560,6 +1850,12 @@ class SessionBilanPage extends StatelessWidget {
     final km = _kmMaxEx(ex);
     if (km > 0) return 'Max ${formatKm(km)} km';
     return 'Max ${_dureeMaxEx(ex) ~/ 60} min';
+  }
+
+  /// Résumé d'un exercice à durée : temps si présent, sinon répétitions.
+  String _resumeDureeEx(PerformedExercise ex) {
+    if (_dureeMaxEx(ex) > 0) return 'Durée max : ${_dureeMaxEx(ex)}s';
+    return 'Max ${_repsMaxEx(ex)} reps';
   }
 
   @override
@@ -1620,7 +1916,7 @@ class SessionBilanPage extends StatelessWidget {
                         : SessionActivePage.isRepsExercice(ex.nom)
                             ? Text('${ex.totalSeries} série(s) · Max ${_repsMaxEx(ex)} reps')
                             : (ex.estDuree ?? SessionActivePage.isDureeExercice(ex.nom))
-                            ? Text('${ex.totalSeries} série(s) · Durée max : ${_dureeMaxEx(ex)}s')
+                            ? Text('${ex.totalSeries} série(s) · ${_resumeDureeEx(ex)}')
                             : Text('${ex.totalSeries} série(s) · Max ${ex.poidsMax.toStringAsFixed(1)} kg'),
                 children: [
                   for (int i = 0; i < ex.series.length; i++)
@@ -1635,7 +1931,9 @@ class SessionBilanPage extends StatelessWidget {
                               : SessionActivePage.isRepsExercice(ex.nom)
                                   ? Text('${ex.series[i].reps} reps')
                                   : (ex.estDuree ?? SessionActivePage.isDureeExercice(ex.nom))
-                                      ? Text('Durée : ${ex.series[i].duree.inSeconds}s')
+                                      ? Text(ex.series[i].duree.inSeconds > 0
+                                          ? 'Durée : ${ex.series[i].duree.inSeconds}s'
+                                          : '${ex.series[i].reps} reps')
                                       : Text('${ex.series[i].poidsKg.toStringAsFixed(1)} kg'),
                       trailing: (SessionActivePage.isCardioExercice(ex.nom) ||
                               SessionActivePage.isAccessoiresExercice(ex.nom) ||

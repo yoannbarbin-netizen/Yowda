@@ -99,7 +99,10 @@ class RecapSeancesPageState extends State<RecapSeancesPage> {
     if (estDuree) {
       final max =
           ex.series.map((s) => s.duree.inSeconds).reduce((a, b) => a > b ? a : b);
-      return 'Durée max : ${max}s';
+      if (max > 0) return 'Durée max : ${max}s';
+      final repsMax =
+          ex.series.map((s) => s.reps).reduce((a, b) => a > b ? a : b);
+      return 'Max $repsMax reps';
     }
     final repsMax = ex.series.map((s) => s.reps).reduce((a, b) => a > b ? a : b);
     return 'Max ${ex.poidsMax.toStringAsFixed(1)} kg × $repsMax reps';

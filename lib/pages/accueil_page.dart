@@ -201,7 +201,7 @@ class AccueilPageState extends State<AccueilPage> {
                       Text(
                         enCours == null
                             ? "Aucune séance en cours — prêt à t'entraîner ?"
-                            : 'En cours depuis ${_heure(enCours.debut)} · ${enCours.exercices.length} exercice(s)',
+                            : 'En cours depuis ${_heure(enCours.debutChrono ?? enCours.debut)} · ${enCours.exercices.length} exercice(s)',
                         style: t.textTheme.bodyMedium
                             ?.copyWith(color: s.onSurfaceVariant),
                       ),

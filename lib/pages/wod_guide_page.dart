@@ -3,6 +3,7 @@ import "dart:async";
 import "package:flutter/material.dart";
 import "package:flutter/services.dart";
 
+import "../data/alerte.dart";
 import "../data/wods.dart";
 import "../theme/app_theme.dart";
 
@@ -94,7 +95,7 @@ class _WodGuidePageState extends State<WodGuidePage> {
         _enMarche = false;
         _fini = true;
         _timer?.cancel();
-        HapticFeedback.heavyImpact();
+        alerteFinChrono();
       }
     });
   }

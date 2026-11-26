@@ -67,18 +67,24 @@ class PerformedExercise {
 class WorkoutSession {
   DateTime debut;
   DateTime? fin; // null tant que la séance n'est pas terminée
+  DateTime? debutChrono; // démarrage réel du chrono (« Démarrer l'entraînement »)
   List<PerformedExercise> exercices;
 
   WorkoutSession({
     required this.debut,
     this.fin,
+    this.debutChrono,
     List<PerformedExercise>? exercices,
   }) : exercices = exercices ?? [];
 
-  /// Durée totale calculée via DateTime.
-  Duration dureeTotale() => fin == null
-      ? DateTime.now().difference(debut)
-      : fin!.difference(debut);
+  /// Durée totale : à partir du démarrage réel du chrono quand il existe
+  /// (sinon la création de la séance, comportement historique).
+  Duration dureeTotale() {
+    final depart = debutChrono ?? debut;
+    return fin == null
+        ? DateTime.now().difference(depart)
+        : fin!.difference(depart);
+  }
 
   int get totalSeries => exercices.fold(0, (sum, ex) => sum + ex.totalSeries);
   double get poidsTotalMax =>
@@ -89,6 +95,7 @@ class WorkoutSession {
   Map<String, dynamic> toJson() => {
         'debut_ms': debut.millisecondsSinceEpoch,
         'fin_ms': fin?.millisecondsSinceEpoch,
+        'debut_chrono_ms': debutChrono?.millisecondsSinceEpoch,
         'exercices': exercices.map((e) => e.toJson()).toList(),
       };
 
@@ -96,6 +103,9 @@ class WorkoutSession {
         debut: DateTime.fromMillisecondsSinceEpoch(json['debut_ms'] as int),
         fin: json['fin_ms'] != null
             ? DateTime.fromMillisecondsSinceEpoch(json['fin_ms'] as int)
+            : null,
+        debutChrono: json['debut_chrono_ms'] != null
+            ? DateTime.fromMillisecondsSinceEpoch(json['debut_chrono_ms'] as int)
             : null,
         exercices: (json['exercices'] as List<dynamic>?)
             ?.map((e) => PerformedExercise.fromJson(e as Map<dynamic, dynamic>))
@@ -108,6 +118,7 @@ class WorkoutSession {
   /// Termine la séance (met fin à now).
   WorkoutSession terminer() => WorkoutSession(
         debut: debut,
+        debutChrono: debutChrono,
         fin: DateTime.now(),
         exercices: List.from(exercices),
       );

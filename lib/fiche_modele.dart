@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'data/echauffements.dart';
 import 'gifs_exercices.dart';
 import 'pages/session_active_page.dart';
 
@@ -40,6 +41,7 @@ class FichePage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final couleurs = Theme.of(context).colorScheme;
+    final recoEchauffement = echauffementPour(nom);
     return Scaffold(
       appBar: AppBar(
         title: Text(nom),
@@ -99,6 +101,20 @@ class FichePage extends StatelessWidget {
           Text(fiche.musclesPrincipaux),
           _titre(context, 'Muscles secondaires'),
           Text(fiche.musclesSecondaires),
+          _titre(context, 'Échauffement conseillé'),
+          Card(
+            child: ListTile(
+              leading: const Icon(Icons.local_fire_department_rounded,
+                  color: Colors.deepOrange),
+              title: Text(
+                recoEchauffement.minutes == 0
+                    ? 'Aucun échauffement nécessaire'
+                    : '${recoEchauffement.minutes} min',
+                style: const TextStyle(fontWeight: FontWeight.bold),
+              ),
+              subtitle: Text(recoEchauffement.consigne),
+            ),
+          ),
           _titre(context, 'Exécution'),
           for (var i = 0; i < fiche.etapes.length; i++)
             Padding(

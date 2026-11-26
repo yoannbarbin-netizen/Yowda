@@ -3,13 +3,15 @@ class PerformedSet {
   int numero; // ex: 1, 2, 3…
   double poidsKg; // ex: 60.0
   int reps; // ex: 10
-  Duration duree; // durée du set en secondes
+  Duration duree; // durée du set en secondes (ou minutes pour le cardio)
+  double? distanceKm; // cardio : distance parcourue en km
 
   PerformedSet({
     required this.numero,
     required this.poidsKg,
     required this.reps,
     required this.duree,
+    this.distanceKm,
   });
 
   /// Sérialisation en JSON pour Hive.
@@ -18,6 +20,7 @@ class PerformedSet {
         'poids_kg': poidsKg,
         'reps': reps,
         'duree_sec': duree.inSeconds,
+        'distance_km': distanceKm,
       };
 
   static PerformedSet fromJson(Map<dynamic, dynamic> json) => PerformedSet(
@@ -25,6 +28,7 @@ class PerformedSet {
         poidsKg: (json['poids_kg'] as num?)?.toDouble() ?? 0.0,
         reps: json['reps'] as int? ?? 0,
         duree: Duration(seconds: json['duree_sec'] as int? ?? 0),
+        distanceKm: (json['distance_km'] as num?)?.toDouble(),
       );
 }
 

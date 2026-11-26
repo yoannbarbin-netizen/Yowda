@@ -11,6 +11,7 @@ import 'crossfit_page.dart';
 import 'echauffement_page.dart';
 import 'etirements_page.dart';
 import 'materiel_maison_page.dart';
+import 'recherche_page.dart';
 import 'sans_materiel_page.dart';
 import 'session_active_page.dart';
 
@@ -74,7 +75,19 @@ class AccueilPageState extends State<AccueilPage> {
     final cats = t.extension<CategoryColors>() ?? CategoryColors.light;
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Appli Muscu')),
+      appBar: AppBar(
+        title: const Text('Appli Muscu'),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.search_rounded),
+            tooltip: 'Rechercher un exercice',
+            onPressed: () => Navigator.push(
+              context,
+              MaterialPageRoute(builder: (_) => const RecherchePage()),
+            ),
+          ),
+        ],
+      ),
       body: _chargement
           ? const Center(child: CircularProgressIndicator())
           : ListView(

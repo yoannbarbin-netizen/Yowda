@@ -90,6 +90,11 @@ class RecapSeancesPageState extends State<RecapSeancesPage> {
           ex.series.map((s) => s.reps).reduce((a, b) => a > b ? a : b);
       return 'Max $repsMax reps';
     }
+    if (SessionActivePage.isRepsExercice(ex.nom)) {
+      final repsMax =
+          ex.series.map((s) => s.reps).reduce((a, b) => a > b ? a : b);
+      return 'Max $repsMax reps';
+    }
     final estDuree = ex.estDuree ?? SessionActivePage.isDureeExercice(ex.nom);
     if (estDuree) {
       final max =
