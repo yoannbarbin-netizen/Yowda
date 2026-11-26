@@ -25,9 +25,10 @@ class CategoryColors extends ThemeExtension<CategoryColors> {
     required this.bodyweight,
     required this.stretching,
     required this.success,
+    required this.crossfit,
   });
 
-  final Color warmup, gym, home, bodyweight, stretching, success;
+  final Color warmup, gym, home, bodyweight, stretching, success, crossfit;
 
   static const dark = CategoryColors(
     warmup: Color(0xFFFFB547),
@@ -36,6 +37,7 @@ class CategoryColors extends ThemeExtension<CategoryColors> {
     bodyweight: Color(0xFF3DDC97),
     stretching: Color(0xFF5BC0FF),
     success: Color(0xFFB8F25B),
+    crossfit: Color(0xFFE85D9E),
   );
 
   static const light = CategoryColors(
@@ -45,6 +47,7 @@ class CategoryColors extends ThemeExtension<CategoryColors> {
     bodyweight: Color(0xFF047857),
     stretching: Color(0xFF0369A1),
     success: Color(0xFF4D7C0F),
+    crossfit: Color(0xFFBE185D),
   );
 
   @override
@@ -55,6 +58,7 @@ class CategoryColors extends ThemeExtension<CategoryColors> {
     Color? bodyweight,
     Color? stretching,
     Color? success,
+    Color? crossfit,
   }) =>
       CategoryColors(
         warmup: warmup ?? this.warmup,
@@ -63,6 +67,7 @@ class CategoryColors extends ThemeExtension<CategoryColors> {
         bodyweight: bodyweight ?? this.bodyweight,
         stretching: stretching ?? this.stretching,
         success: success ?? this.success,
+        crossfit: crossfit ?? this.crossfit,
       );
 
   @override
@@ -75,6 +80,7 @@ class CategoryColors extends ThemeExtension<CategoryColors> {
       bodyweight: Color.lerp(bodyweight, other.bodyweight, t)!,
       stretching: Color.lerp(stretching, other.stretching, t)!,
       success: Color.lerp(success, other.success, t)!,
+      crossfit: Color.lerp(crossfit, other.crossfit, t)!,
     );
   }
 }

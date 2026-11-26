@@ -1,6 +1,8 @@
 // lib/theme/app_theme.dart
 // Flutter >= 3.27 (CardThemeData, Color.withValues). Sur une version plus ancienne :
 // CardTheme au lieu de CardThemeData et withOpacity() au lieu de withValues(alpha:).
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -270,6 +272,9 @@ abstract final class AppTheme {
   }
 
   static TextTheme _textTheme(TextTheme base, ColorScheme s) {
+    // En test (flutter test), google_fonts ne peut pas charger les polices
+    // (pas de réseau ni d'assets) : on garde la police par défaut.
+    if (Platform.environment.containsKey('FLUTTER_TEST')) return base;
     // Construit les styles un par un (on évite volontairement l'API TextTheme de
     // google_fonts : elle n'est pas compatible entre flutter/material et material_ui).
     TextStyle jakarta({

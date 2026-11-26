@@ -1,10 +1,13 @@
 import 'package:flutter/material.dart';
 
+import '../data/crossfit.dart';
 import '../data/session_hive.dart';
+import '../data/wods.dart';
 import '../models/session.dart';
 import '../salle_page.dart';
 import '../theme/app_theme.dart';
 import '../widgets/category_card.dart';
+import 'crossfit_page.dart';
 import 'echauffement_page.dart';
 import 'etirements_page.dart';
 import 'materiel_maison_page.dart';
@@ -138,6 +141,16 @@ class AccueilPageState extends State<AccueilPage> {
                             context,
                             MaterialPageRoute(
                                 builder: (_) => const EtirementsPage()))),
+                    CategoryCard(
+                        icon: Icons.sports_gymnastics_rounded,
+                        label: 'CrossFit',
+                        subtitle:
+                            '${tousExercicesCrossfit.length} exercices · ${wods.length} WOD',
+                        color: cats.crossfit,
+                        onTap: () => Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                                builder: (_) => const CrossfitPage()))),
                   ],
                 ),
                 const SizedBox(height: Sp.xl),
