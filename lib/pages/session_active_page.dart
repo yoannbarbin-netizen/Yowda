@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 
+import '../data/crossfit.dart';
 import '../data/session_hive.dart';
 import '../models/session.dart';
 import '../salle_page.dart';
@@ -32,11 +33,14 @@ class SessionActivePage extends StatefulWidget {
 
   static bool isDureeExercice(String nom) => _SessionActivePageState._dureeExercices.contains(nom);
 
-  /// Exercice de la catégorie Cardio (salle) : temps (minutes) + distance (km).
+  /// Exercice de la catégorie Cardio (salle) : temps (minutes) ou distance (km).
   static bool isCardioExercice(String nom) => _SessionActivePageState._cardioExercices.contains(nom);
 
   /// Exercice de la catégorie Accessoires (salle) : temps (secondes) + répétitions.
   static bool isAccessoiresExercice(String nom) => _SessionActivePageState._accessoiresExercices.contains(nom);
+
+  /// Exercice CrossFit à répétitions seules (poids du corps).
+  static bool isRepsExercice(String nom) => _SessionActivePageState._repsCrossfit.contains(nom);
 
   /// Navigation vers la session active et ouverture du dialogue pour [nomExercise].
   /// [estDuree] : true = durée, false = poids/reps, null = déduire du nom.
@@ -47,6 +51,30 @@ class SessionActivePage extends StatefulWidget {
         builder: (_) => SessionActivePage(preselectionNom: nomExercise, preselectionEstDuree: estDuree),
       ),
     );
+  }
+
+  /// Ajoute plusieurs exercices (sans séries) à la séance active puis l'ouvre.
+  /// Utilisé par les WOD : les exercices arrivent dans la séance, prêts à remplir.
+  static Future<void> ajouterExercices(BuildContext context, List<String> noms) async {
+    if (sessionStorage.isReady) {
+      final sessions = await sessionStorage.chargerToutes();
+      final enCours = sessions.where((s) => !s.estTerminee).toList();
+      final session = enCours.isNotEmpty ? enCours.last : WorkoutSession.vierge();
+      for (final nom in noms) {
+        if (!session.exercices.any((e) => e.nom == nom)) {
+          final estDuree = isDureeExercice(nom) ||
+              _SessionActivePageState._tempsCrossfit.contains(nom);
+          session.exercices.add(PerformedExercise(nom: nom, estDuree: estDuree));
+        }
+      }
+      await sessionStorage.sauvegarder(session);
+    }
+    if (context.mounted) {
+      Navigator.push(
+        context,
+        MaterialPageRoute(builder: (_) => const SessionActivePage()),
+      );
+    }
   }
 
   /// Ajoute un exercice à la session active sans naviguer.
@@ -143,7 +171,7 @@ class _SessionActivePageState extends State<SessionActivePage> with WidgetsBindi
   };
 
   // Exercices de la catégorie Cardio (salle) : on demande un temps (minutes)
-  // et une distance (km) au lieu de poids/répétitions.
+  // OU une distance (km) au lieu de poids/répétitions.
   static const Set<String> _cardioExercices = {
     "Marche inclinée",
     "Course continue",
@@ -173,6 +201,18 @@ class _SessionActivePageState extends State<SessionActivePage> with WidgetsBindi
     "Cuisses",
     "Dos (haut)",
     "Mollets",
+  };
+
+  // Exercices CrossFit : répétitions seules (poids du corps) — dérivés du catalogue.
+  static final Set<String> _repsCrossfit = {
+    for (final e in tousExercicesCrossfit)
+      if (e.typeSaisie == "reps") e.nom,
+  };
+
+  // Exercices CrossFit : durée en secondes (tenues, gainage) — dérivés du catalogue.
+  static final Set<String> _tempsCrossfit = {
+    for (final e in tousExercicesCrossfit)
+      if (e.typeSaisie == "temps") e.nom,
   };
 
   @override
@@ -238,7 +278,7 @@ class _SessionActivePageState extends State<SessionActivePage> with WidgetsBindi
   // ── Ajout d'un set à un exercice existant ou création ──
 
   Future<void> _ajouterSet(String nomExercise, {bool? estDureeForce}) async {
-    // Cardio (salle) : temps (minutes) + distance (km).
+    // Cardio (salle) : au choix temps (minutes) ou distance (km).
     if (_cardioExercices.contains(nomExercise)) {
       await _ajouterSetCardio(nomExercise);
       return;
@@ -247,6 +287,18 @@ class _SessionActivePageState extends State<SessionActivePage> with WidgetsBindi
     // Accessoires (salle) : temps (secondes) + répétitions.
     if (_accessoiresExercices.contains(nomExercise)) {
       await _ajouterSetAccessoires(nomExercise);
+      return;
+    }
+
+    // CrossFit : répétitions seules (poids du corps).
+    if (_repsCrossfit.contains(nomExercise)) {
+      await _ajouterSetReps(nomExercise);
+      return;
+    }
+
+    // CrossFit : durée en secondes (tenues, gainage).
+    if (_tempsCrossfit.contains(nomExercise)) {
+      await _ajouterSetDuree(nomExercise);
       return;
     }
 
@@ -402,9 +454,10 @@ class _SessionActivePageState extends State<SessionActivePage> with WidgetsBindi
     );
   }
 
-  // ── Cardio : temps (minutes) + distance (km) ──
+  // ── Cardio : au choix temps (minutes) OU distance (km) ──
 
   Future<void> _ajouterSetCardio(String nomExercise) async {
+    bool modeDistance = false; // false = temps (minutes), true = distance (km)
     int minutesSelectionnees = 0; // 0 = non sélectionné
     double kmSelectionnes = 0; // 0 = non sélectionné
 
@@ -417,35 +470,53 @@ class _SessionActivePageState extends State<SessionActivePage> with WidgetsBindi
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text('Temps (minutes)'),
-              const SizedBox(height: 4),
-              DropdownButton<int>(
-                value: minutesSelectionnees == 0 ? null : minutesSelectionnees,
-                isExpanded: true,
-                hint: const Text('--'),
-                items: List.generate(180, (i) => i + 1)
-                    .map((v) => DropdownMenuItem(value: v, child: Text('$v min')))
-                    .toList(),
-                onChanged: (v) {
-                  minutesSelectionnees = v ?? 0;
-                  setDialogState(() {});
-                },
+              SegmentedButton<bool>(
+                segments: const [
+                  ButtonSegment(
+                      value: false,
+                      label: Text('Temps'),
+                      icon: Icon(Icons.timer_outlined)),
+                  ButtonSegment(
+                      value: true,
+                      label: Text('Distance'),
+                      icon: Icon(Icons.route_outlined)),
+                ],
+                selected: {modeDistance},
+                onSelectionChanged: (s) =>
+                    setDialogState(() => modeDistance = s.first),
               ),
-              const SizedBox(height: 12),
-              const Text('Distance (km)'),
-              const SizedBox(height: 4),
-              DropdownButton<double>(
-                value: kmSelectionnes == 0 ? null : kmSelectionnes,
-                isExpanded: true,
-                hint: const Text('--'),
-                items: List.generate(100, (i) => (i + 1) * 0.5)
-                    .map((v) => DropdownMenuItem(value: v, child: Text('${formatKm(v)} km')))
-                    .toList(),
-                onChanged: (v) {
-                  kmSelectionnes = v ?? 0;
-                  setDialogState(() {});
-                },
-              ),
+              const SizedBox(height: 16),
+              if (!modeDistance) ...[
+                const Text('Temps (minutes)'),
+                const SizedBox(height: 4),
+                DropdownButton<int>(
+                  value: minutesSelectionnees == 0 ? null : minutesSelectionnees,
+                  isExpanded: true,
+                  hint: const Text('--'),
+                  items: List.generate(180, (i) => i + 1)
+                      .map((v) => DropdownMenuItem(value: v, child: Text('$v min')))
+                      .toList(),
+                  onChanged: (v) {
+                    minutesSelectionnees = v ?? 0;
+                    setDialogState(() {});
+                  },
+                ),
+              ] else ...[
+                const Text('Distance (km)'),
+                const SizedBox(height: 4),
+                DropdownButton<double>(
+                  value: kmSelectionnes == 0 ? null : kmSelectionnes,
+                  isExpanded: true,
+                  hint: const Text('--'),
+                  items: List.generate(100, (i) => (i + 1) * 0.5)
+                      .map((v) => DropdownMenuItem(value: v, child: Text('${formatKm(v)} km')))
+                      .toList(),
+                  onChanged: (v) {
+                    kmSelectionnes = v ?? 0;
+                    setDialogState(() {});
+                  },
+                ),
+              ],
             ],
           ),
           actions: [
@@ -455,7 +526,11 @@ class _SessionActivePageState extends State<SessionActivePage> with WidgetsBindi
             ),
             FilledButton(
               onPressed: () {
-                _enregistrerSetCardio(nomExercise, minutesSelectionnees, kmSelectionnes);
+                if (modeDistance) {
+                  _enregistrerSetCardio(nomExercise, km: kmSelectionnes);
+                } else {
+                  _enregistrerSetCardio(nomExercise, minutes: minutesSelectionnees);
+                }
                 if (mounted) setState(() {});
                 Navigator.pop(ctx);
               },
@@ -467,14 +542,17 @@ class _SessionActivePageState extends State<SessionActivePage> with WidgetsBindi
     );
   }
 
-  void _enregistrerSetCardio(String nomExercise, int minutes, double km) {
+  /// Enregistre un set cardio : soit en minutes (distanceKm reste null),
+  /// soit en kilomètres (durée nulle). Les deux modes sont exclusifs.
+  void _enregistrerSetCardio(String nomExercise, {int? minutes, double? km}) {
+    final duree = minutes == null ? Duration.zero : Duration(minutes: minutes);
     final existing = _session.exercices.indexWhere((e) => e.nom == nomExercise);
     if (existing != -1) {
       final set = PerformedSet(
         numero: _session.exercices[existing].series.length + 1,
         poidsKg: 0.0,
         reps: 0,
-        duree: Duration(minutes: minutes),
+        duree: duree,
         distanceKm: km,
       );
       _session.exercices[existing] = PerformedExercise(
@@ -488,7 +566,7 @@ class _SessionActivePageState extends State<SessionActivePage> with WidgetsBindi
         numero: 1,
         poidsKg: 0.0,
         reps: 0,
-        duree: Duration(minutes: minutes),
+        duree: duree,
         distanceKm: km,
       );
       _session.exercices.add(PerformedExercise(nom: nomExercise, series: [set], estDuree: true));
@@ -592,6 +670,84 @@ class _SessionActivePageState extends State<SessionActivePage> with WidgetsBindi
     sessionStorage.sauvegarder(_session);
   }
 
+  // ── CrossFit : répétitions seules ──
+
+  Future<void> _ajouterSetReps(String nomExercise) async {
+    int repsSelectionnees = 0; // 0 = non sélectionné
+
+    await showDialog<void>(
+      context: context,
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, setDialogState) => AlertDialog(
+          title: Text('Ajouter un set — $nomExercise'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text('Répétitions'),
+              const SizedBox(height: 4),
+              DropdownButton<int>(
+                value: repsSelectionnees == 0 ? null : repsSelectionnees,
+                isExpanded: true,
+                hint: const Text('--'),
+                items: List.generate(100, (i) => i + 1)
+                    .map((v) => DropdownMenuItem(value: v, child: Text('$v')))
+                    .toList(),
+                onChanged: (v) {
+                  repsSelectionnees = v ?? 0;
+                  setDialogState(() {});
+                },
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(ctx),
+              child: const Text('Annuler'),
+            ),
+            FilledButton(
+              onPressed: () {
+                _enregistrerSetReps(nomExercise, repsSelectionnees);
+                if (mounted) setState(() {});
+                Navigator.pop(ctx);
+              },
+              child: const Text('Valider'),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _enregistrerSetReps(String nomExercise, int reps) {
+    final existing = _session.exercices.indexWhere((e) => e.nom == nomExercise);
+    if (existing != -1) {
+      final set = PerformedSet(
+        numero: _session.exercices[existing].series.length + 1,
+        poidsKg: 0.0,
+        reps: reps,
+        duree: Duration.zero,
+      );
+      _session.exercices[existing] = PerformedExercise(
+        nom: nomExercise,
+        series: List.from(_session.exercices[existing].series)..add(set),
+        fait: _session.exercices[existing].fait,
+        estDuree: _session.exercices[existing].estDuree,
+      );
+    } else {
+      final set = PerformedSet(
+        numero: 1,
+        poidsKg: 0.0,
+        reps: reps,
+        duree: Duration.zero,
+      );
+      _session.exercices.add(PerformedExercise(nom: nomExercise, series: [set], estDuree: false));
+    }
+
+    // Sauvegarde Hive
+    sessionStorage.sauvegarder(_session);
+  }
+
   void _enregistrerSetForce(String nomExercise, double poids, int reps) {
     final existing = _session.exercices.indexWhere((e) => e.nom == nomExercise);
     if (existing != -1) {
@@ -663,10 +819,11 @@ class _SessionActivePageState extends State<SessionActivePage> with WidgetsBindi
     final ex = _session.exercices[exIndex];
     final set = ex.series[setIndex];
     if (_isExCardio(exIndex)) {
-      await _modifierSetCardio(
-          exIndex, setIndex, set.duree.inMinutes, set.distanceKm ?? 0);
+      await _modifierSetCardio(exIndex, setIndex, set.duree.inMinutes, set.distanceKm);
     } else if (_isExAccessoires(exIndex)) {
       await _modifierSetAccessoires(exIndex, setIndex, set.duree.inSeconds, set.reps);
+    } else if (_isExReps(exIndex)) {
+      await _modifierSetReps(exIndex, setIndex, set.reps);
     } else if (_isExDuree(exIndex)) {
       await _modifierSetDuree(exIndex, setIndex, set.duree.inSeconds);
     } else {
@@ -819,9 +976,10 @@ class _SessionActivePageState extends State<SessionActivePage> with WidgetsBindi
   }
 
   Future<void> _modifierSetCardio(
-      int exIndex, int setIndex, int minutesInit, double kmInit) async {
+      int exIndex, int setIndex, int minutesInit, double? kmInit) async {
+    bool modeDistance = kmInit != null;
     int minutesSelectionnees = minutesInit;
-    double kmSelectionnes = kmInit;
+    double kmSelectionnes = kmInit ?? 0;
 
     await showDialog<void>(
       context: context,
@@ -832,35 +990,53 @@ class _SessionActivePageState extends State<SessionActivePage> with WidgetsBindi
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text('Temps (minutes)'),
-              const SizedBox(height: 4),
-              DropdownButton<int>(
-                value: minutesSelectionnees <= 0 ? null : minutesSelectionnees,
-                isExpanded: true,
-                hint: const Text('--'),
-                items: List.generate(180, (i) => i + 1)
-                    .map((v) => DropdownMenuItem(value: v, child: Text('$v min')))
-                    .toList(),
-                onChanged: (v) {
-                  minutesSelectionnees = v ?? 0;
-                  setDialogState(() {});
-                },
+              SegmentedButton<bool>(
+                segments: const [
+                  ButtonSegment(
+                      value: false,
+                      label: Text('Temps'),
+                      icon: Icon(Icons.timer_outlined)),
+                  ButtonSegment(
+                      value: true,
+                      label: Text('Distance'),
+                      icon: Icon(Icons.route_outlined)),
+                ],
+                selected: {modeDistance},
+                onSelectionChanged: (s) =>
+                    setDialogState(() => modeDistance = s.first),
               ),
-              const SizedBox(height: 12),
-              const Text('Distance (km)'),
-              const SizedBox(height: 4),
-              DropdownButton<double>(
-                value: kmSelectionnes <= 0 ? null : kmSelectionnes,
-                isExpanded: true,
-                hint: const Text('--'),
-                items: List.generate(100, (i) => (i + 1) * 0.5)
-                    .map((v) => DropdownMenuItem(value: v, child: Text('${formatKm(v)} km')))
-                    .toList(),
-                onChanged: (v) {
-                  kmSelectionnes = v ?? 0;
-                  setDialogState(() {});
-                },
-              ),
+              const SizedBox(height: 16),
+              if (!modeDistance) ...[
+                const Text('Temps (minutes)'),
+                const SizedBox(height: 4),
+                DropdownButton<int>(
+                  value: minutesSelectionnees <= 0 ? null : minutesSelectionnees,
+                  isExpanded: true,
+                  hint: const Text('--'),
+                  items: List.generate(180, (i) => i + 1)
+                      .map((v) => DropdownMenuItem(value: v, child: Text('$v min')))
+                      .toList(),
+                  onChanged: (v) {
+                    minutesSelectionnees = v ?? 0;
+                    setDialogState(() {});
+                  },
+                ),
+              ] else ...[
+                const Text('Distance (km)'),
+                const SizedBox(height: 4),
+                DropdownButton<double>(
+                  value: kmSelectionnes <= 0 ? null : kmSelectionnes,
+                  isExpanded: true,
+                  hint: const Text('--'),
+                  items: List.generate(100, (i) => (i + 1) * 0.5)
+                      .map((v) => DropdownMenuItem(value: v, child: Text('${formatKm(v)} km')))
+                      .toList(),
+                  onChanged: (v) {
+                    kmSelectionnes = v ?? 0;
+                    setDialogState(() {});
+                  },
+                ),
+              ],
             ],
           ),
           actions: [
@@ -877,8 +1053,10 @@ class _SessionActivePageState extends State<SessionActivePage> with WidgetsBindi
                     numero: _session.exercices[exIndex].series[setIndex].numero,
                     poidsKg: 0.0,
                     reps: 0,
-                    duree: Duration(minutes: minutesSelectionnees),
-                    distanceKm: kmSelectionnes,
+                    duree: modeDistance
+                        ? Duration.zero
+                        : Duration(minutes: minutesSelectionnees),
+                    distanceKm: modeDistance ? kmSelectionnes : null,
                   ),
                 );
                 if (mounted) setState(() {});
@@ -952,6 +1130,62 @@ class _SessionActivePageState extends State<SessionActivePage> with WidgetsBindi
                     poidsKg: 0.0,
                     reps: repsSelectionnees,
                     duree: Duration(seconds: secondesSelectionnees),
+                  ),
+                );
+                if (mounted) setState(() {});
+                Navigator.pop(ctx);
+              },
+              child: const Text('Valider'),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Future<void> _modifierSetReps(int exIndex, int setIndex, int repsInit) async {
+    int repsSelectionnees = repsInit;
+
+    await showDialog<void>(
+      context: context,
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, setDialogState) => AlertDialog(
+          title: Text('Modifier la série ${setIndex + 1}'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text('Répétitions'),
+              const SizedBox(height: 4),
+              DropdownButton<int>(
+                value: repsSelectionnees <= 0 ? null : repsSelectionnees,
+                isExpanded: true,
+                hint: const Text('--'),
+                items: List.generate(100, (i) => i + 1)
+                    .map((v) => DropdownMenuItem(value: v, child: Text('$v')))
+                    .toList(),
+                onChanged: (v) {
+                  repsSelectionnees = v ?? 0;
+                  setDialogState(() {});
+                },
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(ctx),
+              child: const Text('Annuler'),
+            ),
+            FilledButton(
+              onPressed: () {
+                _remplacerSet(
+                  exIndex,
+                  setIndex,
+                  PerformedSet(
+                    numero: _session.exercices[exIndex].series[setIndex].numero,
+                    poidsKg: 0.0,
+                    reps: repsSelectionnees,
+                    duree: Duration.zero,
                   ),
                 );
                 if (mounted) setState(() {});
@@ -1045,6 +1279,8 @@ class _SessionActivePageState extends State<SessionActivePage> with WidgetsBindi
 
   bool _isExAccessoires(int index) => _accessoiresExercices.contains(_session.exercices[index].nom);
 
+  bool _isExReps(int index) => _repsCrossfit.contains(_session.exercices[index].nom);
+
   int _dureeMax(int index) {
     final series = _session.exercices[index].series;
     return series.isEmpty ? 0 : series.map((s) => s.duree.inSeconds).reduce((a, b) => a > b ? a : b);
@@ -1058,6 +1294,13 @@ class _SessionActivePageState extends State<SessionActivePage> with WidgetsBindi
   int _repsMax(int index) {
     final series = _session.exercices[index].series;
     return series.isEmpty ? 0 : series.map((s) => s.reps).reduce((a, b) => a > b ? a : b);
+  }
+
+  /// Résumé cardio d'un exercice : « Max X km » ou « Max Y min » selon le mode utilisé.
+  String _cardioResume(int index) {
+    final km = _kmMax(index);
+    if (km > 0) return 'Max ${formatKm(km)} km';
+    return 'Max ${_dureeMax(index) ~/ 60} min';
   }
 
   // ── Terminer la séance ──
@@ -1231,10 +1474,12 @@ class _SessionActivePageState extends State<SessionActivePage> with WidgetsBindi
                         ),
                       ),
                       subtitle: _isExCardio(i)
-                          ? Text('${_session.exercices[i].totalSeries} série(s) · Max ${formatKm(_kmMax(i))} km')
+                          ? Text('${_session.exercices[i].totalSeries} série(s) · ${_cardioResume(i)}')
                           : _isExAccessoires(i)
                               ? Text('${_session.exercices[i].totalSeries} série(s) · Max ${_repsMax(i)} reps')
-                              : _isExDuree(i)
+                              : _isExReps(i)
+                                  ? Text('${_session.exercices[i].totalSeries} série(s) · Max ${_repsMax(i)} reps')
+                                  : _isExDuree(i)
                                   ? Text('${_session.exercices[i].totalSeries} série(s) · Durée max : ${_dureeMax(i)}s')
                                   : Text('${_session.exercices[i].totalSeries} série(s) · Max ${_session.exercices[i].poidsMax.toStringAsFixed(1)} kg'),
                       children: [
@@ -1252,10 +1497,14 @@ class _SessionActivePageState extends State<SessionActivePage> with WidgetsBindi
                             child: SetRow(
                               index: _session.exercices[i].series[j].numero,
                               valeur: _isExCardio(i)
-                                  ? '${_session.exercices[i].series[j].duree.inMinutes} min · ${formatKm(_session.exercices[i].series[j].distanceKm ?? 0)} km'
+                                  ? (_session.exercices[i].series[j].distanceKm != null
+                                      ? '${formatKm(_session.exercices[i].series[j].distanceKm!)} km'
+                                      : '${_session.exercices[i].series[j].duree.inMinutes} min')
                                   : _isExAccessoires(i)
                                       ? '${_session.exercices[i].series[j].duree.inSeconds} s × ${_session.exercices[i].series[j].reps} reps'
-                                      : _isExDuree(i)
+                                      : _isExReps(i)
+                                          ? '${_session.exercices[i].series[j].reps} reps'
+                                          : _isExDuree(i)
                                           ? '${_session.exercices[i].series[j].duree.inSeconds} s'
                                           : '${_session.exercices[i].series[j].poidsKg.toStringAsFixed(1)} kg × ${_session.exercices[i].series[j].reps} reps',
                               onEdit: () => _modifierSet(i, j),
@@ -1304,6 +1553,13 @@ class SessionBilanPage extends StatelessWidget {
 
   int _repsMaxEx(PerformedExercise ex) {
     return ex.series.isEmpty ? 0 : ex.series.map((s) => s.reps).reduce((a, b) => a > b ? a : b);
+  }
+
+  /// Résumé cardio : « Max X km » ou « Max Y min » selon le mode utilisé.
+  String _cardioResumeEx(PerformedExercise ex) {
+    final km = _kmMaxEx(ex);
+    if (km > 0) return 'Max ${formatKm(km)} km';
+    return 'Max ${_dureeMaxEx(ex) ~/ 60} min';
   }
 
   @override
@@ -1358,10 +1614,12 @@ class SessionBilanPage extends StatelessWidget {
                   ),
                 ),
                 subtitle: SessionActivePage.isCardioExercice(ex.nom)
-                    ? Text('${ex.totalSeries} série(s) · Max ${formatKm(_kmMaxEx(ex))} km')
+                    ? Text('${ex.totalSeries} série(s) · ${_cardioResumeEx(ex)}')
                     : SessionActivePage.isAccessoiresExercice(ex.nom)
                         ? Text('${ex.totalSeries} série(s) · Max ${_repsMaxEx(ex)} reps')
-                        : (ex.estDuree ?? SessionActivePage.isDureeExercice(ex.nom))
+                        : SessionActivePage.isRepsExercice(ex.nom)
+                            ? Text('${ex.totalSeries} série(s) · Max ${_repsMaxEx(ex)} reps')
+                            : (ex.estDuree ?? SessionActivePage.isDureeExercice(ex.nom))
                             ? Text('${ex.totalSeries} série(s) · Durée max : ${_dureeMaxEx(ex)}s')
                             : Text('${ex.totalSeries} série(s) · Max ${ex.poidsMax.toStringAsFixed(1)} kg'),
                 children: [
@@ -1369,14 +1627,19 @@ class SessionBilanPage extends StatelessWidget {
                     ListTile(
                       leading: CircleAvatar(child: Text('${ex.series[i].numero}')),
                       title: SessionActivePage.isCardioExercice(ex.nom)
-                          ? Text('${ex.series[i].duree.inMinutes} min · ${formatKm(ex.series[i].distanceKm ?? 0)} km')
+                          ? Text(ex.series[i].distanceKm != null
+                              ? '${formatKm(ex.series[i].distanceKm!)} km'
+                              : '${ex.series[i].duree.inMinutes} min')
                           : SessionActivePage.isAccessoiresExercice(ex.nom)
                               ? Text('${ex.series[i].duree.inSeconds} s × ${ex.series[i].reps} reps')
-                              : (ex.estDuree ?? SessionActivePage.isDureeExercice(ex.nom))
-                                  ? Text('Durée : ${ex.series[i].duree.inSeconds}s')
-                                  : Text('${ex.series[i].poidsKg.toStringAsFixed(1)} kg'),
+                              : SessionActivePage.isRepsExercice(ex.nom)
+                                  ? Text('${ex.series[i].reps} reps')
+                                  : (ex.estDuree ?? SessionActivePage.isDureeExercice(ex.nom))
+                                      ? Text('Durée : ${ex.series[i].duree.inSeconds}s')
+                                      : Text('${ex.series[i].poidsKg.toStringAsFixed(1)} kg'),
                       trailing: (SessionActivePage.isCardioExercice(ex.nom) ||
                               SessionActivePage.isAccessoiresExercice(ex.nom) ||
+                              SessionActivePage.isRepsExercice(ex.nom) ||
                               (ex.estDuree ?? SessionActivePage.isDureeExercice(ex.nom)))
                           ? null
                           : Text('${ex.series[i].reps} reps'),

@@ -1,0 +1,291 @@
+import "package:appli_muscu/fiche_modele.dart";
+
+/// Fiches CrossFit — Core & stabilité (et réutilisés sans fiche existante).
+const Map<String, FicheExercice> fichesCrossfitCore = {
+  "V-Ups": FicheExercice(
+    niveau: "Intermédiaire",
+    seriesReps: "4 séries de 10 à 20 répétitions",
+    musclesPrincipaux: "Abdominaux",
+    musclesSecondaires: "Fléchisseurs de hanches, quadriceps",
+    etapes: [
+      "Allongé sur le dos, bras tendus au-dessus de la tête, jambes tendues.",
+      "En un seul mouvement, monte le buste ET les jambes pour former un V.",
+      "Viens toucher tes pieds avec tes mains au sommet.",
+      "Redescends en contrôlant, sans poser les pieds ni les mains au sol.",
+    ],
+    respiration: "Expire fortement à la montée, inspire à la descente.",
+    erreurs: [
+      "Monter avec l'élan des bras au lieu des abdos.",
+      "Plier les genoux.",
+      "Poser complètement entre les répétitions (perte de tension).",
+    ],
+    conseils: [
+      "Trop dur ? Fais des crunches + relevés de jambes séparés d'abord.",
+      "Garde les jambes tendues : c'est le V qui compte.",
+    ],
+  ),
+  "Hollow Rocks": FicheExercice(
+    niveau: "Intermédiaire",
+    seriesReps: "4 séries de 20 à 40 secondes (ou 10 à 20 balancements)",
+    musclesPrincipaux: "Abdominaux, gainage",
+    musclesSecondaires: "Fléchisseurs de hanches, quadriceps",
+    etapes: [
+      "Position de hollow body : épaules et jambes décollées, bas du dos plaqué.",
+      "Bascule le bassin et fais rouler ton corps d'avant en arrière.",
+      "Les mains et les pieds ne touchent JAMAIS le sol.",
+      "Reste dans la même position pendant tous les balancements.",
+    ],
+    respiration: "Respiration courte et rythmée avec les balancements.",
+    erreurs: [
+      "Perdre la position hollow en roulant.",
+      "Prendre de l'élan avec les jambes.",
+      "Laisser le bas du dos se creuser.",
+    ],
+    conseils: [
+      "Le hollow rock est un hollow hold qui bouge : maîtrise le maintien d'abord.",
+      "Si le dos se décolle, raccourcis les bras (le long du corps).",
+    ],
+  ),
+  "Sit-ups CrossFit": FicheExercice(
+    niveau: "Débutant à intermédiaire",
+    seriesReps: "4 séries de 15 à 25 répétitions",
+    musclesPrincipaux: "Abdominaux",
+    musclesSecondaires: "Fléchisseurs de hanches, épaules",
+    etapes: [
+      "Allongé sur le dos, bras tendus au-dessus de la tête, jambes fléchies.",
+      "Monte le buste en balançant les bras vers l'avant.",
+      "Viens toucher le sol devant tes pieds avec les mains.",
+      "Redescends en contrôlant jusqu'à toucher le sol avec les épaules.",
+    ],
+    respiration: "Expire à la montée, inspire à la descente.",
+    erreurs: [
+      "Tirer sur la nuque avec les mains (les bras restent tendus).",
+      "Ne pas toucher le sol entre les répétitions.",
+      "Se servir de l'élan des jambes.",
+    ],
+    conseils: [
+      "Le sit-up CrossFit est un mouvement complet : bras tendus, amplitude totale.",
+      "Trop dur ? Reviens aux crunchs, puis au sit-up classique.",
+    ],
+  ),
+  "GHD Sit-ups": FicheExercice(
+    niveau: "Avancé",
+    seriesReps: "3 à 5 séries de 10 à 20 répétitions",
+    musclesPrincipaux: "Abdominaux, fléchisseurs de hanches",
+    musclesSecondaires: "Quadriceps, dos",
+    etapes: [
+      "Assis sur la machine GHD, pieds calés, hanches au bord du coussin.",
+      "Descends le buste en arrière en gardant les bras tendus au-dessus de la tête.",
+      "Descends jusqu'à toucher le sol derrière (ou jusqu'où tu contrôles).",
+      "Remonte en un mouvement fluide, sans à-coup, jusqu'à toucher tes pieds.",
+    ],
+    respiration: "Inspire à la descente, expire à la montée.",
+    erreurs: [
+      "Descendre trop bas trop vite (risque lombaire).",
+      "Monter par à-coups.",
+      "Sauter les séries de progression.",
+    ],
+    conseils: [
+      "Progression OBLIGATOIRE : amplitude partielle d'abord, jamais de volume brutal.",
+      "C'est un mouvement exigeant : 10 répétitions propres valent mieux que 30 moches.",
+    ],
+  ),
+  "GHD Back Extensions": FicheExercice(
+    niveau: "Intermédiaire",
+    seriesReps: "3 à 4 séries de 12 à 20 répétitions",
+    musclesPrincipaux: "Lombaires, fessiers",
+    musclesSecondaires: "Ischio-jambiers, dos",
+    etapes: [
+      "Sur la machine GHD, hanches au bord du coussin, pieds calés, corps droit.",
+      "Descends le buste vers le sol en gardant le dos neutre.",
+      "Remonte jusqu'à l'alignement complet du corps (pas plus).",
+      "Contrôle la descente à chaque répétition.",
+    ],
+    respiration: "Inspire à la descente, expire à la remontée.",
+    erreurs: [
+      "Monter au-delà de l'alignement (hyperextension).",
+      "Descente non contrôlée.",
+      "Amplitude trop grande pour ton niveau.",
+    ],
+    conseils: [
+      "Excellent pour équilibrer le travail abdominal et protéger le bas du dos.",
+      "Garde le regard vers le sol en descendant.",
+    ],
+  ),
+  "GHD Hip Extensions": FicheExercice(
+    niveau: "Intermédiaire",
+    seriesReps: "3 à 4 séries de 12 à 20 répétitions",
+    musclesPrincipaux: "Fessiers, ischio-jambiers",
+    musclesSecondaires: "Lombaires, gainage",
+    etapes: [
+      "Sur la machine GHD, hanches au bord du coussin, buste posé, pieds calés.",
+      "Descends les jambes tendues vers le sol en gardant le buste fixe.",
+      "Remonte les jambes jusqu'à l'alignement avec le buste.",
+      "Serre les fessiers en haut, puis redescends en contrôlant.",
+    ],
+    respiration: "Expire à la remontée, inspire à la descente.",
+    erreurs: [
+      "Casser le buste pour aider.",
+      "Monter les jambes trop haut.",
+      "Utiliser l'élan.",
+    ],
+    conseils: [
+      "C'est un hip thrust version machine : concentre-toi sur la contraction des fessiers.",
+      "Dos neutre, jamais arrondi en bas du mouvement.",
+    ],
+  ),
+  "Plank Shoulder Taps": FicheExercice(
+    niveau: "Débutant à intermédiaire",
+    seriesReps: "4 séries de 20 à 40 secondes",
+    musclesPrincipaux: "Abdos, épaules",
+    musclesSecondaires: "Gainage, fessiers",
+    etapes: [
+      "Position de planche haute, mains sous les épaules, pieds écartés.",
+      "Décolle une main et touche l'épaule opposée.",
+      "Repose la main, puis alterne avec l'autre bras.",
+      "Les hanches ne bougent PAS : tout le travail est là.",
+    ],
+    respiration: "Respiration continue et calme.",
+    erreurs: [
+      "Fesses qui balancent à chaque toucher.",
+      "Hanches qui montent.",
+      "Mains trop rapprochées.",
+    ],
+    conseils: [
+      "Écarte un peu plus les pieds pour plus de stabilité au début.",
+      "Pose la main doucement : pas de choc sur l'épaule.",
+    ],
+  ),
+  "Arch Hold": FicheExercice(
+    niveau: "Débutant",
+    seriesReps: "3 à 4 séries de 20 à 40 secondes",
+    musclesPrincipaux: "Lombaires, fessiers",
+    musclesSecondaires: "Épaules, ischio-jambiers",
+    etapes: [
+      "Allongé sur le ventre, bras tendus devant, jambes tendues.",
+      "Décolle en même temps les bras, la poitrine et les jambes du sol.",
+      "Regarde le sol pour garder la nuque neutre.",
+      "Tiens la position en serrant fessiers et dos.",
+    ],
+    respiration: "Respiration continue, jamais bloquée.",
+    erreurs: [
+      "Relever la tête (nuque en extension).",
+      "Plier les genoux.",
+      "Cambrer en force au lieu de contracter.",
+    ],
+    conseils: [
+      "L'arch hold est le miroir du hollow body : travaille les deux pour un dos équilibré.",
+      "Mains au sol (version facile) pour commencer si besoin.",
+    ],
+  ),
+  "Arch Rocks": FicheExercice(
+    niveau: "Intermédiaire",
+    seriesReps: "3 à 4 séries de 10 à 20 balancements",
+    musclesPrincipaux: "Lombaires, fessiers",
+    musclesSecondaires: "Épaules, gainage",
+    etapes: [
+      "Position d'arch hold : bras, poitrine et jambes décollés.",
+      "Bascule doucement ton corps d'avant en arrière.",
+      "Garde la position arquée pendant TOUS les balancements.",
+      "Amplitude courte et contrôlée au début.",
+    ],
+    respiration: "Respiration rythmée avec les balancements.",
+    erreurs: [
+      "Perdre l'extension entre les balancements.",
+      "Prendre une amplitude trop grande.",
+      "Relever la tête.",
+    ],
+    conseils: [
+      "Comme le hollow rock, mais en extension : équilibre parfait du gainage.",
+      "Maîtrise l'arch hold statique avant de le faire bouger.",
+    ],
+  ),
+  "Planche latérale": FicheExercice(
+    niveau: "Débutant",
+    seriesReps: "3 séries de 20 à 45 secondes par côté",
+    musclesPrincipaux: "Obliques, gainage",
+    musclesSecondaires: "Épaules, fessiers, hanches",
+    etapes: [
+      "Allongé sur le côté, appui sur l'avant-bras, coude sous l'épaule.",
+      "Décolle les hanches jusqu'à aligner tête, bassin et pieds.",
+      "Tends le bras du haut vers le ciel.",
+      "Tiens la position, puis change de côté.",
+    ],
+    respiration: "Respiration calme et continue.",
+    erreurs: [
+      "Hanches qui descendent.",
+      "Épaule d'appui qui remonte vers l'oreille.",
+      "Corps plié en avant.",
+    ],
+    conseils: [
+      "Version facile : genou du bas posé au sol.",
+      "Pense à pousser le sol avec l'avant-bras : épaule stable.",
+    ],
+  ),
+  "Crunchs": FicheExercice(
+    niveau: "Débutant",
+    seriesReps: "3 à 4 séries de 15 à 25 répétitions",
+    musclesPrincipaux: "Abdominaux",
+    musclesSecondaires: "Cou, fléchisseurs de hanches",
+    etapes: [
+      "Allongé sur le dos, genoux fléchis, pieds au sol.",
+      "Mains derrière la tête SANS tirer, ou croisées sur la poitrine.",
+      "Décolle les épaules du sol en enroulant le buste.",
+      "Redescends lentement sans poser complètement la tête.",
+    ],
+    respiration: "Expire en montant, inspire en descendant.",
+    erreurs: [
+      "Tirer sur la nuque.",
+      "Monter avec l'élan.",
+      "Décoller tout le dos (ça devient un sit-up).",
+    ],
+    conseils: [
+      "Le crunch est un enroulement, pas une montée : pense « côtes vers le bassin ».",
+      "Ralentis la descente : c'est là que le muscle travaille.",
+    ],
+  ),
+  "Dead bug": FicheExercice(
+    niveau: "Débutant",
+    seriesReps: "3 séries de 8 à 12 répétitions par côté",
+    musclesPrincipaux: "Abdos profonds, gainage",
+    musclesSecondaires: "Lombaires, épaules",
+    etapes: [
+      "Allongé sur le dos, bras tendus vers le plafond, jambes fléchies à 90°.",
+      "Plaque le bas du dos au sol (c'est la règle absolue).",
+      "Tends lentement un bras derrière la tête et la jambe opposée vers l'avant.",
+      "Reviens au centre, puis alterne avec l'autre bras et l'autre jambe.",
+    ],
+    respiration: "Expire pendant l'extension, inspire au retour.",
+    erreurs: [
+      "Bas du dos qui se décolle.",
+      "Mouvement rapide sans contrôle.",
+      "Bloquer la respiration.",
+    ],
+    conseils: [
+      "Plus tu vas lentement, plus c'est dur — et plus c'est efficace.",
+      "Si le dos se décolle, réduis l'amplitude de la jambe.",
+    ],
+  ),
+  "Bird dog": FicheExercice(
+    niveau: "Débutant",
+    seriesReps: "3 séries de 8 à 12 répétitions par côté",
+    musclesPrincipaux: "Lombaires, gainage",
+    musclesSecondaires: "Fessiers, épaules, ischio-jambiers",
+    etapes: [
+      "À quatre pattes, mains sous les épaules, genoux sous les hanches.",
+      "Tends en même temps un bras devant et la jambe opposée derrière.",
+      "Garde le dos parfaitement plat, bassin stable.",
+      "Tiens 2 secondes en haut, puis reviens et change de côté.",
+    ],
+    respiration: "Expire pendant l'extension, inspire au retour.",
+    erreurs: [
+      "Cambrer ou tourner le bassin.",
+      "Monter la jambe trop haut.",
+      "Regarder en l'air (garde la nuque neutre).",
+    ],
+    conseils: [
+      "Imagine un verre d'eau posé sur ton bas du dos : il ne doit pas tomber.",
+      "Excellent échauffement avant le soulevé de terre.",
+    ],
+  ),
+};

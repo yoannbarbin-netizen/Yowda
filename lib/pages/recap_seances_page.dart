@@ -80,9 +80,17 @@ class RecapSeancesPageState extends State<RecapSeancesPage> {
       final maxKm = ex.series
           .map((s) => s.distanceKm ?? 0)
           .reduce((a, b) => a > b ? a : b);
-      return 'Max ${formatKm(maxKm)} km';
+      if (maxKm > 0) return 'Max ${formatKm(maxKm)} km';
+      final maxMin =
+          ex.series.map((s) => s.duree.inMinutes).reduce((a, b) => a > b ? a : b);
+      return 'Max $maxMin min';
     }
     if (SessionActivePage.isAccessoiresExercice(ex.nom)) {
+      final repsMax =
+          ex.series.map((s) => s.reps).reduce((a, b) => a > b ? a : b);
+      return 'Max $repsMax reps';
+    }
+    if (SessionActivePage.isRepsExercice(ex.nom)) {
       final repsMax =
           ex.series.map((s) => s.reps).reduce((a, b) => a > b ? a : b);
       return 'Max $repsMax reps';

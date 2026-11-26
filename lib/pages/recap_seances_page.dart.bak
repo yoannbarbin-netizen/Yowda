@@ -12,10 +12,10 @@ class RecapSeancesPage extends StatefulWidget {
   const RecapSeancesPage({super.key});
 
   @override
-  State<RecapSeancesPage> createState() => _RecapSeancesPageState();
+  State<RecapSeancesPage> createState() => RecapSeancesPageState();
 }
 
-class _RecapSeancesPageState extends State<RecapSeancesPage> {
+class RecapSeancesPageState extends State<RecapSeancesPage> {
   List<WorkoutSession> _sessions = [];
   bool _chargement = true;
   String _recherche = '';
@@ -47,6 +47,9 @@ class _RecapSeancesPageState extends State<RecapSeancesPage> {
     }
   }
 
+  /// Recharge l'historique (appelé par le shell quand l'onglet devient actif).
+  Future<void> rafraichir() => _charger();
+
   List<WorkoutSession> get _affichees {
     if (_recherche.trim().isEmpty) return _sessions;
     final q = _recherche.trim().toLowerCase();
@@ -73,6 +76,20 @@ class _RecapSeancesPageState extends State<RecapSeancesPage> {
 
   String _resumeExercice(PerformedExercise ex) {
     if (ex.series.isEmpty) return 'Aucune série';
+    if (SessionActivePage.isCardioExercice(ex.nom)) {
+      final maxKm = ex.series
+          .map((s) => s.distanceKm ?? 0)
+          .reduce((a, b) => a > b ? a : b);
+      if (maxKm > 0) return 'Max ${formatKm(maxKm)} km';
+      final maxMin =
+          ex.series.map((s) => s.duree.inMinutes).reduce((a, b) => a > b ? a : b);
+      return 'Max $maxMin min';
+    }
+    if (SessionActivePage.isAccessoiresExercice(ex.nom)) {
+      final repsMax =
+          ex.series.map((s) => s.reps).reduce((a, b) => a > b ? a : b);
+      return 'Max $repsMax reps';
+    }
     final estDuree = ex.estDuree ?? SessionActivePage.isDureeExercice(ex.nom);
     if (estDuree) {
       final max =

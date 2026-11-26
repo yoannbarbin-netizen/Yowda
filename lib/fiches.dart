@@ -11,6 +11,11 @@ import 'package:appli_muscu/fiches_cardio_a.dart';
 import 'package:appli_muscu/fiches_cardio_b.dart';
 import 'package:appli_muscu/fiches_accessoires_a.dart';
 import 'package:appli_muscu/fiches_accessoires_b.dart';
+import 'package:appli_muscu/fiches_crossfit_gym.dart';
+import 'package:appli_muscu/fiches_crossfit_haltero.dart';
+import 'package:appli_muscu/fiches_crossfit_force.dart';
+import 'package:appli_muscu/fiches_crossfit_cond.dart';
+import 'package:appli_muscu/fiches_crossfit_core.dart';
 
 export 'package:appli_muscu/fiche_modele.dart';
 
@@ -27,4 +32,9 @@ final Map<String, FicheExercice> fiches = {
   ...fichesCardioB,
   ...fichesAccessoiresA,
   ...fichesAccessoiresB,
+  ...fichesCrossfitGym,
+  ...fichesCrossfitHaltero,
+  ...fichesCrossfitForce,
+  ...fichesCrossfitCond,
+  ...fichesCrossfitCore,
 };

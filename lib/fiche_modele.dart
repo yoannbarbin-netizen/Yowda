@@ -27,7 +27,10 @@ class FicheExercice {
 class FichePage extends StatelessWidget {
   final String nom;
   final FicheExercice fiche;
-  const FichePage({super.key, required this.nom, required this.fiche});
+  /// Type de saisie pour le bouton « Ajouter » : true = durée, false = poids/reps
+  /// (défaut, comportement historique de la salle), null = déduire du nom (CrossFit).
+  final bool? estDuree;
+  const FichePage({super.key, required this.nom, required this.fiche, this.estDuree = false});
 
   Widget _titre(BuildContext context, String texte) => Padding(
         padding: const EdgeInsets.only(top: 20, bottom: 8),
@@ -44,7 +47,7 @@ class FichePage extends StatelessWidget {
           IconButton(
             icon: const Icon(Icons.fitness_center, color: Colors.deepOrange),
             tooltip: 'Ajouter à l\'entraînement actif',
-            onPressed: () => SessionActivePage.ajouterEtOuvrir(context, nom, estDuree: false),
+            onPressed: () => SessionActivePage.ajouterEtOuvrir(context, nom, estDuree: estDuree),
           ),
         ],
       ),

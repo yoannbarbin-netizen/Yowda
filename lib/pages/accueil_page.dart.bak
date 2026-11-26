@@ -16,10 +16,10 @@ class AccueilPage extends StatefulWidget {
   const AccueilPage({super.key});
 
   @override
-  State<AccueilPage> createState() => _AccueilPageState();
+  State<AccueilPage> createState() => AccueilPageState();
 }
 
-class _AccueilPageState extends State<AccueilPage> {
+class AccueilPageState extends State<AccueilPage> {
   List<WorkoutSession> _sessions = [];
   bool _chargement = true;
 
@@ -39,6 +39,9 @@ class _AccueilPageState extends State<AccueilPage> {
       });
     }
   }
+
+  /// Recharge les séances (appelé par le shell quand l'onglet devient actif).
+  Future<void> rafraichir() => _charger();
 
   WorkoutSession? get _enCours {
     final list = _sessions.where((s) => !s.estTerminee).toList();
