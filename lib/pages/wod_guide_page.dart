@@ -220,7 +220,11 @@ class _WodGuidePageState extends State<WodGuidePage> {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
+                      // Style local : le thème force la pleine largeur
+                      // (Size.fromHeight) — incompatible avec un Row.
                       FilledButton.icon(
+                        style: FilledButton.styleFrom(
+                            minimumSize: const Size(0, 56)),
                         icon: Icon(_fini
                             ? Icons.refresh_rounded
                             : (_enMarche
@@ -234,6 +238,8 @@ class _WodGuidePageState extends State<WodGuidePage> {
                       if (!_aDecompte && !_fini) ...[
                         const SizedBox(width: Sp.md),
                         OutlinedButton.icon(
+                          style: OutlinedButton.styleFrom(
+                              minimumSize: const Size(0, 52)),
                           icon: const Icon(Icons.stop_rounded),
                           label: const Text("Terminer"),
                           onPressed: _terminer,

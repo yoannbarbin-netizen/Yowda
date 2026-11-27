@@ -6,6 +6,7 @@ import '../data/alerte.dart';
 import '../data/crossfit.dart';
 import '../data/echauffements.dart';
 import '../data/session_hive.dart';
+import '../fiches.dart';
 import '../models/session.dart';
 import '../salle_page.dart';
 import '../theme/app_theme.dart';
@@ -1626,6 +1627,37 @@ class _SessionActivePageState extends State<SessionActivePage> with WidgetsBindi
     });
   }
 
+  /// Ouvre les détails d'un exercice : fiche complète si elle existe,
+  /// sinon consignes simples issues des données (sans matériel, maison...).
+  void _ouvrirDetails(String nom) {
+    if (fiches.containsKey(nom)) {
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (_) =>
+              FichePage(nom: nom, fiche: fiches[nom]!, estDuree: null),
+        ),
+      );
+      return;
+    }
+    final texte = consigneSimple(nom);
+    if (texte != null) {
+      showDialog<void>(
+        context: context,
+        builder: (ctx) => AlertDialog(
+          title: Text(nom),
+          content: SingleChildScrollView(child: Text(texte)),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(ctx),
+              child: const Text('Fermer'),
+            ),
+          ],
+        ),
+      );
+    }
+  }
+
   /// Ligne « Échauffement conseillé : X min » : « Démarrer » ajoute
   /// l'échauffement en haut de la séance (avec ses consignes) et le lance.
   Widget _ligneEchauffement(int i) {
@@ -1734,6 +1766,14 @@ class _SessionActivePageState extends State<SessionActivePage> with WidgetsBindi
                 }
               }),
             ],
+            Align(
+              alignment: Alignment.centerLeft,
+              child: TextButton.icon(
+                icon: const Icon(Icons.menu_book_rounded, size: 18),
+                label: const Text("Détails de l'exercice"),
+                onPressed: () => _ouvrirDetails(base),
+              ),
+            ),
           ],
         ),
       ),
@@ -1896,6 +1936,18 @@ class _SessionActivePageState extends State<SessionActivePage> with WidgetsBindi
                                   : Text('${_session.exercices[i].totalSeries} série(s) · Max ${_session.exercices[i].poidsMax.toStringAsFixed(1)} kg'),
                       children: [
                         _ligneEchauffement(i),
+                        Padding(
+                          padding: const EdgeInsets.fromLTRB(16, 0, 8, 0),
+                          child: Align(
+                            alignment: Alignment.centerLeft,
+                            child: TextButton.icon(
+                              icon: const Icon(Icons.menu_book_rounded, size: 18),
+                              label: const Text("Détails de l'exercice"),
+                              onPressed: () =>
+                                  _ouvrirDetails(_session.exercices[i].nom),
+                            ),
+                          ),
+                        ),
                         for (int j = 0; j < _session.exercices[i].series.length; j++)
                           Dismissible(
                             key: Key('$i-$j'),

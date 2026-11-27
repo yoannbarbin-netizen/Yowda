@@ -6,6 +6,7 @@ import "package:flutter/services.dart";
 import "../data/alerte.dart";
 import "../data/wods.dart";
 import "../theme/app_theme.dart";
+import "session_active_page.dart";
 
 /// WOD guidé : chrono adapté au format du WOD.
 ///  - For Time / Intervalles : chrono qui monte, bouton « Terminer ».
@@ -24,6 +25,7 @@ class _WodGuidePageState extends State<WodGuidePage> {
   Timer? _timer;
   bool _enMarche = false;
   bool _fini = false;
+  bool _exercicesAjoutes = false;
   int _secondes = 0; // For Time : temps écoulé ; AMRAP/EMOM/Tabata : temps restant
   int _tours = 0; // AMRAP
 
@@ -65,6 +67,11 @@ class _WodGuidePageState extends State<WodGuidePage> {
       _timer?.cancel();
       setState(() => _enMarche = false);
       return;
+    }
+    // Au premier démarrage : les exercices du WOD rejoignent l'entraînement libre.
+    if (!_exercicesAjoutes) {
+      _exercicesAjoutes = true;
+      SessionActivePage.ajouterExercicesSansNaviguer(widget.wod.exercices);
     }
     setState(() => _enMarche = true);
     HapticFeedback.mediumImpact();
@@ -221,7 +228,7 @@ class _WodGuidePageState extends State<WodGuidePage> {
                                 : Icons.play_arrow_rounded)),
                         label: Text(_fini
                             ? "Recommencer"
-                            : (_enMarche ? "Pause" : "Démarrer")),
+                            : (_enMarche ? "Pause" : "Démarrer le WOD")),
                         onPressed: _fini ? _recommencer : _basculer,
                       ),
                       if (!_aDecompte && !_fini) ...[
@@ -234,6 +241,16 @@ class _WodGuidePageState extends State<WodGuidePage> {
                       ],
                     ],
                   ),
+                  if (_exercicesAjoutes)
+                    Padding(
+                      padding: const EdgeInsets.only(top: Sp.sm),
+                      child: Text(
+                        '${widget.wod.exercices.length} exercices ajoutés à l\'entraînement libre',
+                        style: t.textTheme.bodySmall
+                            ?.copyWith(color: couleurs.onSurfaceVariant),
+                        textAlign: TextAlign.center,
+                      ),
+                    ),
                   if (_fini) ...[
                     const SizedBox(height: Sp.md),
                     Text(

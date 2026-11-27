@@ -86,6 +86,9 @@ class SessionActivePage extends StatefulWidget {
   /// Exercice CrossFit à répétitions seules (poids du corps).
   static bool isRepsExercice(String nom) => _SessionActivePageState._repsCrossfit.contains(nom);
 
+  /// Entrée d'échauffement ajoutée à l'entraînement libre.
+  static bool estEchauffement(String nom) => exerciceDeLEchauffement(nom) != null;
+
   /// Navigation vers la session active et ouverture du dialogue pour [nomExercise].
   /// [estDuree] : true = durée, false = poids/reps, null = déduire du nom.
   static Future<void> ajouterEtOuvrir(BuildContext context, String nomExercise, {bool? estDuree}) async {
@@ -97,9 +100,9 @@ class SessionActivePage extends StatefulWidget {
     );
   }
 
-  /// Ajoute plusieurs exercices (sans séries) à la séance active puis l'ouvre.
-  /// Utilisé par les WOD : les exercices arrivent dans la séance, prêts à remplir.
-  static Future<void> ajouterExercices(BuildContext context, List<String> noms) async {
+  /// Ajoute plusieurs exercices à la séance active (sans naviguer).
+  /// Utilisé par les WOD au démarrage du chrono guidé.
+  static Future<void> ajouterExercicesSansNaviguer(List<String> noms) async {
     if (sessionStorage.isReady) {
       final sessions = await sessionStorage.chargerToutes();
       final enCours = sessions.where((s) => !s.estTerminee).toList();
@@ -111,7 +114,42 @@ class SessionActivePage extends StatefulWidget {
           session.exercices.add(PerformedExercise(nom: nom, estDuree: estDuree));
         }
       }
-      await sessionStorage.sauvegarder(session);
+      sessionStorage.sauvegarder(session);
+    }
+  }
+
+  /// Ajoute plusieurs exercices (sans séries) à la séance active puis l'ouvre.
+  static Future<void> ajouterExercices(BuildContext context, List<String> noms) async {
+    await ajouterExercicesSansNaviguer(noms);
+    if (context.mounted) {
+      Navigator.push(
+        context,
+        MaterialPageRoute(builder: (_) => const SessionActivePage()),
+      );
+    }
+  }
+
+  /// Ajoute l'échauffement conseillé d'un exercice à l'entraînement libre
+  /// (en tête de séance, avec sa durée) puis ouvre la séance.
+  static Future<void> ajouterEchauffement(BuildContext context, String exercice) async {
+    final reco = echauffementPour(exercice);
+    if (reco.minutes <= 0) return;
+    if (sessionStorage.isReady) {
+      final sessions = await sessionStorage.chargerToutes();
+      final enCours = sessions.where((s) => !s.estTerminee).toList();
+      final session = enCours.isNotEmpty ? enCours.last : WorkoutSession.vierge();
+      final nom = nomEchauffementPour(exercice);
+      if (!session.exercices.any((e) => e.nom == nom)) {
+        final set = PerformedSet(
+          numero: 1,
+          poidsKg: 0.0,
+          reps: 0,
+          duree: Duration(minutes: reco.minutes),
+        );
+        session.exercices
+            .insert(0, PerformedExercise(nom: nom, series: [set], estDuree: true));
+      }
+      sessionStorage.sauvegarder(session);
     }
     if (context.mounted) {
       Navigator.push(
@@ -1588,17 +1626,15 @@ class _SessionActivePageState extends State<SessionActivePage> with WidgetsBindi
     });
   }
 
-  /// Ligne « Échauffement conseillé : X min » + décompte lançable.
+  /// Ligne « Échauffement conseillé : X min » : « Démarrer » ajoute
+  /// l'échauffement en haut de la séance (avec ses consignes) et le lance.
   Widget _ligneEchauffement(int i) {
     final nom = _session.exercices[i].nom;
     final reco = echauffementPour(nom);
     if (reco.minutes <= 0) return const SizedBox.shrink();
-    final cle = '$nom#echauffement';
-    final c = _chronos[cle];
-    if (c != null) {
-      return _bandeauMinuteur(c, () => _basculerChrono(c));
-    }
     final t = Theme.of(context);
+    final nomEch = nomEchauffementPour(nom);
+    final dejaLance = _session.exercices.any((e) => e.nom == nomEch);
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 8, 8, 0),
       child: Row(
@@ -1608,20 +1644,109 @@ class _SessionActivePageState extends State<SessionActivePage> with WidgetsBindi
           const SizedBox(width: 8),
           Expanded(
             child: Text(
-              'Échauffement conseillé : ${reco.minutes} min',
+              dejaLance
+                  ? "Échauffement lancé — en haut de l'écran"
+                  : 'Échauffement conseillé : ${reco.minutes} min',
               style:
                   t.textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w600),
             ),
           ),
-          TextButton(
-            onPressed: () => setState(() {
-              _chronos[cle] = _ChronoSet(reco.minutes * 60)..demarrer();
-            }),
-            child: const Text('Démarrer'),
-          ),
+          if (!dejaLance)
+            TextButton(
+              onPressed: () => _demarrerEchauffement(i),
+              child: const Text('Démarrer'),
+            ),
         ],
       ),
     );
+  }
+
+  /// Ajoute l'échauffement conseillé en tête de séance et lance son décompte.
+  void _demarrerEchauffement(int i) {
+    final exercice = _session.exercices[i].nom;
+    final reco = echauffementPour(exercice);
+    if (reco.minutes <= 0) return;
+    final nom = nomEchauffementPour(exercice);
+    if (!_session.exercices.any((e) => e.nom == nom)) {
+      final set = PerformedSet(
+        numero: 1,
+        poidsKg: 0.0,
+        reps: 0,
+        duree: Duration(minutes: reco.minutes),
+      );
+      _session.exercices
+          .insert(0, PerformedExercise(nom: nom, series: [set], estDuree: true));
+      sessionStorage.sauvegarder(_session);
+      _autoChrono(nom);
+    }
+    setState(() {});
+  }
+
+  /// Carte d'un échauffement lancé : affichée en priorité avec ses consignes.
+  Widget _carteEchauffement(int i) {
+    final ex = _session.exercices[i];
+    final base = exerciceDeLEchauffement(ex.nom)!;
+    final reco = echauffementPour(base);
+    final t = Theme.of(context);
+    final set = ex.series.isNotEmpty ? ex.series.first : null;
+    final cle = set == null ? null : '${ex.nom}#${set.numero}';
+    final c = cle == null
+        ? null
+        : (_chronos[cle] ?? _ChronoSet(set!.duree.inSeconds));
+    return Card(
+      color: t.colorScheme.primaryContainer,
+      child: Padding(
+        padding: const EdgeInsets.all(Sp.md),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                const Icon(Icons.local_fire_department_rounded,
+                    color: Colors.deepOrange),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    'Échauffement — $base',
+                    style: t.textTheme.titleMedium
+                        ?.copyWith(fontWeight: FontWeight.bold),
+                  ),
+                ),
+                IconButton(
+                  visualDensity: VisualDensity.compact,
+                  tooltip: "Retirer l'échauffement",
+                  icon: const Icon(Icons.close_rounded, size: 20),
+                  onPressed: () => _retirerEchauffement(i),
+                ),
+              ],
+            ),
+            const SizedBox(height: 4),
+            Text(reco.consigne, style: t.textTheme.bodyMedium),
+            if (set != null && c != null) ...[
+              const SizedBox(height: 4),
+              _bandeauMinuteur(c, () {
+                if (cle == null) return;
+                if (_chronos[cle] == null) {
+                  setState(() =>
+                      _chronos[cle] = _ChronoSet(set.duree.inSeconds)..demarrer());
+                } else {
+                  _basculerChrono(_chronos[cle]!);
+                }
+              }),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _retirerEchauffement(int i) {
+    final nom = _session.exercices[i].nom;
+    setState(() {
+      _session.exercices.removeAt(i);
+      _chronos.removeWhere((k, v) => k.startsWith('$nom#'));
+    });
+    sessionStorage.sauvegarder(_session);
   }
 
   // ── UI ──
@@ -1726,9 +1851,15 @@ class _SessionActivePageState extends State<SessionActivePage> with WidgetsBindi
                 ),
                 const SizedBox(height: 16),
 
+                // Échauffements lancés : affichés en priorité, avec consignes.
+                for (int i = 0; i < _session.exercices.length; i++)
+                  if (exerciceDeLEchauffement(_session.exercices[i].nom) != null)
+                    _carteEchauffement(i),
+
                 // Liste des exercices
                 for (int i = 0; i < _session.exercices.length; i++)
-                  Card(
+                  if (exerciceDeLEchauffement(_session.exercices[i].nom) == null)
+                    Card(
                     child: ExpansionTile(
                       leading: IconButton(
                         icon: Icon(
@@ -1854,7 +1985,12 @@ class SessionBilanPage extends StatelessWidget {
 
   /// Résumé d'un exercice à durée : temps si présent, sinon répétitions.
   String _resumeDureeEx(PerformedExercise ex) {
-    if (_dureeMaxEx(ex) > 0) return 'Durée max : ${_dureeMaxEx(ex)}s';
+    if (_dureeMaxEx(ex) > 0) {
+      if (exerciceDeLEchauffement(ex.nom) != null) {
+        return 'Durée max : ${_dureeMaxEx(ex) ~/ 60} min';
+      }
+      return 'Durée max : ${_dureeMaxEx(ex)}s';
+    }
     return 'Max ${_repsMaxEx(ex)} reps';
   }
 
@@ -1932,7 +2068,9 @@ class SessionBilanPage extends StatelessWidget {
                                   ? Text('${ex.series[i].reps} reps')
                                   : (ex.estDuree ?? SessionActivePage.isDureeExercice(ex.nom))
                                       ? Text(ex.series[i].duree.inSeconds > 0
-                                          ? 'Durée : ${ex.series[i].duree.inSeconds}s'
+                                          ? (exerciceDeLEchauffement(ex.nom) != null
+                                              ? 'Durée : ${ex.series[i].duree.inMinutes} min'
+                                              : 'Durée : ${ex.series[i].duree.inSeconds}s')
                                           : '${ex.series[i].reps} reps')
                                       : Text('${ex.series[i].poidsKg.toStringAsFixed(1)} kg'),
                       trailing: (SessionActivePage.isCardioExercice(ex.nom) ||

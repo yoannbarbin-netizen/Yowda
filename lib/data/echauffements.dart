@@ -38,6 +38,31 @@ String? exerciceDeLEchauffement(String nom) =>
         ? nom.substring(prefixeEchauffement.length)
         : null;
 
+/// Consignes simples d'un exercice sans fiche complète (sans matériel,
+/// maison, échauffement, étirements) : consigne + conseil / sécurité.
+/// Retourne null si l'exercice est introuvable.
+String? consigneSimple(String nom) {
+  for (final e in [
+    ...cardioExercices,
+    ...streetWorkoutExercices,
+    ...homeWorkoutExercices,
+  ]) {
+    if (e.nom == nom) return '${e.consigne}\n\nConseil : ${e.conseil}';
+  }
+  for (final e in echauffement) {
+    if (e.nom == nom) return '${e.consigne}\n\nConseil : ${e.conseil}';
+  }
+  for (final e in etirements) {
+    if (e.nom == nom) return '${e.consigne}\n\nConseil : ${e.conseil}';
+  }
+  for (final e in exercicesMaison) {
+    if (e.nom == nom) {
+      return '${e.consigne}\n\nSécurité : ${e.securite}';
+    }
+  }
+  return null;
+}
+
 /// Lit la prescription d'un exercice d'échauffement ou d'étirement
 /// (« 20 secondes par côté » → 20 s ; « 10 répétitions par jambe » → 10 reps).
 /// Retourne null si l'exercice n'est pas concerné (pas de réglage imposé).
