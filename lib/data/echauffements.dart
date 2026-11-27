@@ -24,6 +24,20 @@ class PrescriptionImposee {
   const PrescriptionImposee({this.secondes, this.reps});
 }
 
+/// Préfixe des entrées d'échauffement ajoutées à l'entraînement libre.
+const String prefixeEchauffement = "Échauffement — ";
+
+/// Nom d'entrée d'échauffement pour un exercice donné.
+String nomEchauffementPour(String exercice) =>
+    '$prefixeEchauffement$exercice';
+
+/// Retrouve l'exercice d'origine d'une entrée d'échauffement
+/// (null si le nom n'est pas une entrée d'échauffement).
+String? exerciceDeLEchauffement(String nom) =>
+    nom.startsWith(prefixeEchauffement)
+        ? nom.substring(prefixeEchauffement.length)
+        : null;
+
 /// Lit la prescription d'un exercice d'échauffement ou d'étirement
 /// (« 20 secondes par côté » → 20 s ; « 10 répétitions par jambe » → 10 reps).
 /// Retourne null si l'exercice n'est pas concerné (pas de réglage imposé).

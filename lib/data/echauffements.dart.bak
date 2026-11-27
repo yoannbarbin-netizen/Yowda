@@ -16,6 +16,37 @@ class RecoEchauffement {
   const RecoEchauffement(this.minutes, this.consigne);
 }
 
+/// Prescription imposée par la fiche d'un échauffement / étirement :
+/// soit une durée (secondes), soit un nombre de répétitions.
+class PrescriptionImposee {
+  final int? secondes;
+  final int? reps;
+  const PrescriptionImposee({this.secondes, this.reps});
+}
+
+/// Lit la prescription d'un exercice d'échauffement ou d'étirement
+/// (« 20 secondes par côté » → 20 s ; « 10 répétitions par jambe » → 10 reps).
+/// Retourne null si l'exercice n'est pas concerné (pas de réglage imposé).
+PrescriptionImposee? prescriptionImposee(String nom) {
+  String? texte;
+  for (final e in echauffement) {
+    if (e.nom == nom) texte = e.duree;
+  }
+  for (final e in etirements) {
+    if (e.nom == nom) texte = e.duree;
+  }
+  if (texte == null) return null;
+  final sec = RegExp(r"^(\d+)\s+secondes?").firstMatch(texte);
+  if (sec != null) {
+    return PrescriptionImposee(secondes: int.parse(sec.group(1)!));
+  }
+  final rep = RegExp(r"^(\d+)\s+répétitions?").firstMatch(texte);
+  if (rep != null) {
+    return PrescriptionImposee(reps: int.parse(rep.group(1)!));
+  }
+  return null;
+}
+
 RecoEchauffement echauffementPour(String nom) {
   // Étirements et échauffement : par nature déjà « chauds ».
   if (etirements.any((e) => e.nom == nom)) {

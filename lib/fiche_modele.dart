@@ -113,6 +113,18 @@ class FichePage extends StatelessWidget {
                 style: const TextStyle(fontWeight: FontWeight.bold),
               ),
               subtitle: Text(recoEchauffement.consigne),
+              trailing: recoEchauffement.minutes == 0
+                  ? null
+                  : IconButton(
+                      icon: const Icon(Icons.add_circle_outline),
+                      tooltip: "Ajouter l'échauffement à l'entraînement",
+                      onPressed: () =>
+                          SessionActivePage.ajouterEchauffement(context, nom),
+                    ),
+              onTap: recoEchauffement.minutes == 0
+                  ? null
+                  : () =>
+                      SessionActivePage.ajouterEchauffement(context, nom),
             ),
           ),
           _titre(context, 'Exécution'),
